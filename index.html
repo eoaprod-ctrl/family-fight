@@ -164,6 +164,11 @@ kbd{font:700 13px/1 Heebo,Arial,sans-serif;border:2px solid var(--line);border-b
 .mvrow p{margin:2px 0 0;font-size:13px;color:var(--muted);line-height:1.4}
 .mvrow .btn{padding:8px 14px;font-size:15px;box-shadow:3px 3px 0 var(--ink);border-width:2px;white-space:nowrap}
 .mvrow.fin{border-color:var(--c)}
+.rscore{display:flex;align-items:center;justify-content:center;gap:18px;margin:10px 0 6px}
+.rscore .side{display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:800}
+.rscore .x{font-size:34px;font-weight:900}
+.av.big{width:64px;height:64px}
+.rdots{display:flex;gap:6px}.rdot{width:14px;height:14px;border-radius:50%;border:2px solid var(--ink);background:transparent}.rdot.on{background:var(--c)}
 @media (max-width:560px){.det{padding:10px;font-size:13px}.det .sw2{font-size:13px}}
 </style>
 </head>
@@ -264,7 +269,7 @@ if(TOUCH)document.body.classList.add('touch');
 
 /* ---------- the family ---------- */
 const CHARS=[
- {id:'hali',name:'חלי',role:'אמא',color:'#E6307A',icon:'🤖',sc:1,hp:96,speed:3.9,jump:-14.3,power:.94,
+ {id:'hali',name:'חלי',role:'אמא',color:'#E6307A',icon:'🤖',sc:1,hp:190,speed:3.9,jump:-14.3,power:.93,
   style:'מנהלת הבית',
   strong:'השואבים תוקפים מרחוק בזמן שהיא ממשיכה להילחם. הדריכה שלה לא נעצרת גם כשהיא חוטפת מכה.',
   weak:'קפיצה נמוכה, ובלי מד מלא היא צריכה להיכנס מקרוב.',
@@ -272,7 +277,7 @@ const CHARS=[
   mv:{kick:{s:11,a:5,r:16,dmg:13,reach:96,y1:-62,y2:0,kb:9,stun:20,m:10,armor:true},
       special:{kind:'vacuum',s:14,a:1,r:16}},
   quote:'עכשיו הסלון נקי.'},
- {id:'nadav',name:'נדב',role:'אבא',color:'#2F9BFF',icon:'☀️',sc:1.08,hp:89,speed:3.0,jump:-13.6,power:.87,
+ {id:'nadav',name:'נדב',role:'אבא',color:'#2F9BFF',icon:'☀️',sc:1.08,hp:178,speed:3.0,jump:-13.6,power:.87,
   style:'תותח כבד',
   strong:'הפאנל נותן לו את הטווח הכי ארוך במשפחה, והמכות שלו הכי כבדות.',
   weak:'הכי איטי בהליכה ובקפיצה, ומטרה גדולה.',
@@ -281,7 +286,7 @@ const CHARS=[
       kick:{s:10,a:5,r:17,dmg:10,reach:104,y1:-60,y2:0,kb:7,stun:17,m:9},
       special:{kind:'solar',s:16,a:5,r:22,dmg:12,reach:118,y1:-200,y2:0,kb:8,stun:20,m:0}},
   quote:'זה נקרא החזר השקעה.'},
- {id:'adi',name:'עדי',role:'בן 15',color:'#8B5CF6',icon:'💻',sc:.96,hp:114,speed:4.5,jump:-15.5,power:1.06,
+ {id:'adi',name:'עדי',role:'בן 15',color:'#8B5CF6',icon:'💻',sc:.96,hp:213,speed:4.5,jump:-15.5,power:1.08,
   style:'טכנולוג',
   strong:'הרחפן רודף אחרי היריב בזמן שעדי ממשיך לזוז. לחיצה כפולה על כיוון עושה דאש מהיר.',
   weak:'המכות מקרוב חלשות, והוא צריך לשמור מרחק.',
@@ -289,7 +294,7 @@ const CHARS=[
   mv:{punch:{s:3,a:3,r:7,dmg:5,reach:80,kb:2.5,stun:11,m:6},
       special:{kind:'drone',s:8,a:1,r:12}},
   dash:true,quote:'עדכון תוכנה הושלם.'},
- {id:'aviv',name:'אביב',role:'בן 13',color:'#FFB020',icon:'💃',sc:.92,hp:97,speed:5.6,jump:-16,power:.9,
+ {id:'aviv',name:'אביב',role:'בן 13',color:'#FFB020',icon:'💃',sc:.92,hp:193,speed:5.6,jump:-16,power:.9,
   style:'רקדן בטן',
   strong:'קפיצה כפולה באוויר, בעיטה שפוגעת פעמיים, והריקוד עובר דרך נשק מעופף.',
   weak:'כל מכה בודדת חלשה. הוא צריך רצפים כדי לנצח.',
@@ -297,7 +302,7 @@ const CHARS=[
   mv:{kick:{s:7,a:12,r:12,dmg:5,multi:6,reach:98,y1:-112,y2:-50,kb:2.5,stun:14,m:6},
       special:{kind:'dance',s:6,a:40,r:14,dmg:3,multi:8,reach:84,y1:-190,y2:0,kb:1.5,stun:14,m:0,move:4.5,projImmune:true}},
   doubleJump:true,quote:'תנסו לעקוב אחרי הירכיים.'},
- {id:'ziv',name:'זיו',role:'בן 10',color:'#20B26B',icon:'👀',sc:.84,hp:122,speed:5.1,jump:-17.5,power:.86,
+ {id:'ziv',name:'זיו',role:'בן 10',color:'#20B26B',icon:'👀',sc:.84,hp:245,speed:5.1,jump:-17.5,power:.86,
   style:'מציק מהאוויר',
   strong:'קופץ הכי גבוה ויש לו בעיטת צלילה באלכסון. המבט שלו משתק את היריב לרגע.',
   weak:'מכות קלות. צריך לנצח בזריזות ולא בכוח.',
@@ -305,7 +310,7 @@ const CHARS=[
   mv:{air:{s:4,a:24,r:6,dmg:9,reach:72,y1:-50,y2:12,kb:5,stun:16,m:8,dive:true},
       special:{kind:'eyes',s:12,a:8,r:18,dmg:6,dizzy:60,kb:1,stun:0,m:0}},
   quote:'לא הסתכלת לי בעיניים.'},
- {id:'omer',name:'עומר',role:'בן 6',color:'#FF4F1F',icon:'📢',sc:.7,hp:127,speed:5.9,jump:-15,power:.97,
+ {id:'omer',name:'עומר',role:'בן 6',color:'#FF4F1F',icon:'📢',sc:.7,hp:255,speed:5.9,jump:-15,power:.97,
   style:'פצצה קטנה',
   strong:'הכי מהיר, וכשהוא מתכופף כמעט שום דבר לא מגיע אליו. הצעקה מעיפה את היריב עד הקיר.',
   weak:'טווח קצר ומכות קלות.',
@@ -417,7 +422,7 @@ const imgCache=new Map();
 function getImg(c){if(!c.photo)return Promise.resolve(null);let im=imgCache.get(c.photo);if(!im){im=new Image();im.src=c.photo;imgCache.set(c.photo,im);}return(im.decode?im.decode():Promise.resolve()).then(()=>im).catch(()=>null);}
 function avatar(c,cls=''){return `<span class="av ${cls}" style="--c:${c.color}">${c.photo?`<img src="${c.photo}" alt="">`:`<b>${esc(initial(c.name))}</b>`}</span>`;}
 function statBars(c){
-  const rows=[['חיים',(c.hp-70)/58],['מהירות',(c.speed-2.6)/3.5],['כוח',(c.power-.7)/.65]];
+  const rows=[['חיים',(c.hp-140)/116],['מהירות',(c.speed-2.6)/3.5],['כוח',(c.power-.7)/.65]];
   return `<div class="stats">${rows.map(([l,v])=>`<div class="stat">${l}<i><b style="width:${Math.round(Math.max(.08,Math.min(1,v))*100)}%"></b></i></div>`).join('')}</div>`;
 }
 
@@ -732,7 +737,7 @@ async function startMatch(){
 function startRound(){
   game.p.forEach((f,i)=>Object.assign(f,{x:i?660:300,y:GROUND,vx:0,vy:0,facing:i?-1:1,hp:f.maxHp,lagHp:f.maxHp,meter:0,state:'idle',atk:null,stun:0,dizzy:0,dizzyImm:0,dashT:0,grab:null,jumps:0,
     buf:{},held:{},combo:0,comboT:0,ai:null,koRot:0,flash:0,anim:0,sq:0,hsq:0,tilt:0,trail:[],P:null,pu:false,pf:false,pb:false,tapF:-99,tapB:-99,chainT:0,chainStep:0,recover:0,chainN:0,atkGap:0,inv:0,downT:0,noPanel:false,dog:false,hidden:false,melt:0,meltT:0,goo:null}));
-  proj=[];parts=[];drones=[];beams=[];bots=[];game.timer=60*60;game.banners=[null,null];game.combo=[{n:0,t:0},{n:0,t:0}];game.roundWinner=null;game.koFocus=null;fx=[];
+  proj=[];parts=[];drones=[];beams=[];bots=[];game.timer=99*60;game.banners=[null,null];game.combo=[{n:0,t:0},{n:0,t:0}];game.roundWinner=null;game.koFocus=null;fx=[];
   if(!game.vsDone){game.vsDone=true;game.phase='vs';game.phaseT=150;}else{game.phase='intro';game.phaseT=120;sfx('round');}
   game.p.forEach(f=>{f.P=pose(f);});
   if(game.round>1)duckMusic(.3);
@@ -745,7 +750,20 @@ function ko(def,att,dir){
   else if(game.roundWinner===def){def.wins--;game.roundWinner=null;game.endText='תיקו';}
 }
 function timeUp(){const[a,b]=game.p,ra=a.hp/a.maxHp,rb=b.hp/b.maxHp;endRound(ra>rb?a:rb>ra?b:null,'הזמן נגמר');sfx('ko');}
-function nextRound(){if(game.mode==='demo')return demoOver();if(game.p.some(f=>f.wins>=2)||game.round>=5)return matchOver();game.round++;startRound();}
+let autoRounds=false;
+function nextRound(){if(game.mode==='demo')return demoOver();if(game.p.some(f=>f.wins>=2)||game.round>=5)return matchOver();if(autoRounds){game.round++;startRound();return;}roundBreak();}
+// between rounds: show the score and let the players continue or go back to fighter select
+function roundBreak(){
+  game.phase='break';running=false;duckMusic(.12);
+  const[a,b]=game.p,w=game.roundWinner,ov=$('#ov');
+  const dots=f=>[0,1].map(i=>`<span class="rdot${i<f.wins?' on':''}" style="--c:${f.c.color}"></span>`).join('');
+  ov.innerHTML=`<div class="panel"><h2>${w?`הסיבוב של ${esc(w.c.name)}`:'אין מנצח בסיבוב'}</h2>
+    <div class="rscore"><div class="side">${avatar(a.c,'big')}<span>${esc(a.c.name)}</span><div class="rdots">${dots(a)}</div></div><div class="x">${a.wins} : ${b.wins}</div><div class="side">${avatar(b.c,'big')}<span>${esc(b.c.name)}</span><div class="rdots">${dots(b)}</div></div></div>
+    <p class="quote">הטוב משלושה · הראשון ששני ניצחונות</p>
+    <div class="actions"><button class="btn primary" data-ov="nextRound">לסיבוב ${game.round+1}</button><button class="btn" data-ov="select">בחירת לוחמים</button></div></div>`;
+  ov.hidden=false;
+}
+function resumeRound(){$('#ov').hidden=true;game.round++;startRound();duckMusic(.3);paused=false;running=true;last=0;acc=0;requestAnimationFrame(loop);}
 function matchOver(){
   game.phase='over';running=false;stopMusic();sfx('win');vibe([30,40,30,40,80]);
   const[a,b]=game.p,w=a.wins>b.wins?a:b.wins>a.wins?b:null;
@@ -762,6 +780,7 @@ $('#ov').addEventListener('click',e=>{
   if(a==='demoAgain'&&demo)return startDemo(demo.id,demo.kind,demo.from);
   if(a==='demoOther'&&demo)return startDemo(demo.id,demo.kind==='finish'?'special':'finish',demo.from);
   if(a==='demoBack'){$('#ov').hidden=true;show(demo?demo.from:'select');return;}
+  if(a==='nextRound')return resumeRound();
   if(a==='again')startMatch();else if(a==='resume')togglePause(false);else if(a==='select'){$('#ov').hidden=true;show('select');}
 });
 /* ---------- move demos: watch a special or a finisher on a training dummy ---------- */
@@ -809,7 +828,7 @@ function demoOver(){
   ov.hidden=false;
 }
 function togglePause(v){
-  if(!game||game.phase==='over')return;
+  if(!game||game.phase==='over'||game.phase==='break')return;
   paused=v??!paused;const ov=$('#ov');
   duckMusic(paused?.07:.3);
   if(paused){ov.innerHTML=`<div class="panel"><h2>הפסקה</h2><p class="quote">סיבוב ${game.round}</p><div class="setrow">${optionsHTML()}</div><div class="actions"><button class="btn primary" data-ov="resume">המשך</button><button class="btn" data-ov="select">יציאה לבחירת לוחמים</button></div></div>`;ov.hidden=false;keys.clear();touchHeld.clear();}
