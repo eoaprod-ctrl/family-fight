@@ -619,15 +619,25 @@ function tintCv(im,col,alpha){const c=document.createElement('canvas');c.width=i
 // the photo faces are cut straight at the chin: feather the bottom rows so the chin melts into the drawn neck
 function featherCv(im,px){const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext('2d');x.drawImage(im,0,0);
   x.globalCompositeOperation='destination-out';const g=x.createLinearGradient(0,c.height-px,0,c.height);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(.55,'rgba(0,0,0,.55)');g.addColorStop(1,'rgba(0,0,0,1)');x.fillStyle=g;x.fillRect(0,c.height-px,c.width,px);return c;}
+// where the chin really is inside a face cut-out: centre, width and bottom, as fractions of the image
+function chinOf(im){try{const W0=im.naturalWidth,H0=im.naturalHeight,c=document.createElement('canvas');c.width=W0;c.height=H0;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(im,0,0);
+  const d=x.getImageData(0,0,W0,H0).data;
+  // skin test (YCrCb), so long hair hanging below the chin is not mistaken for the chin
+  const skin=(i,j)=>{const o=(j*W0+i)*4;if(d[o+3]<110)return false;const r=d[o],g=d[o+1],b=d[o+2],Y=.299*r+.587*g+.114*b,Cr=128+.5*r-.419*g-.081*b,Cb=128-.169*r-.331*g+.5*b;return Y>70&&Cr>136&&Cr<178&&Cb>80&&Cb<130;};
+  const rowN=j=>{let n=0;for(let i=0;i<W0;i+=2)if(skin(i,j))n++;return n;};
+  let yb=H0-1;const need=Math.max(3,W0*.03);for(;yb>H0*.4;yb--)if(rowN(yb)>=need&&rowN(yb-2)>=need)break;
+  const y0=Math.max(0,yb-Math.round(H0*.07));let x0=W0,x1=0;
+  for(let j=y0;j<=yb;j++)for(let i=0;i<W0;i++)if(skin(i,j)){if(i<x0)x0=i;if(i>x1)x1=i;}
+  if(x1<=x0)return{x:.5,w:.3,b:1};return{x:(x0+x1)/2/W0,w:Math.min(.5,(x1-x0)/W0),b:(yb+1)/H0};}catch(e){return{x:.5,w:.3,b:1};}}
 const RIG_PARTS=new Set(['torso','hips','uarm','farm','thigh','shin','shoe','f_neutral','f_attack','f_hit','f_ko','f_profile','panel','drone']);
 function loadRig(id){
   if(RIG[id])return RIG[id].ready;
   const src=RIG_SRC[id];if(!src)return Promise.resolve(false);
-  const R={def:RIG_DEF[id],n:{},d:{},w:{},ok:false};RIG[id]=R;
+  const R={def:RIG_DEF[id],n:{},d:{},w:{},chin:{},ok:false};RIG[id]=R;
   R.ready=Promise.all(Object.entries(src).map(([k,u])=>{const im=new Image();im.src=u;
     return(im.decode?im.decode():new Promise((res,rej)=>{im.onload=res;im.onerror=rej;})).then(()=>{
       if(!RIG_PARTS.has(k)){R.n[k]=im;return;}   // props: decoded once, no tinted copies
-      const base=k.startsWith('f_')?featherCv(im,Math.round(im.naturalHeight*.02)+2):im;
+      const base=k.startsWith('f_')?featherCv(im,Math.round(im.naturalHeight*.02)+2):im;if(k.startsWith('f_'))R.chin[k]=chinOf(im);
       R.n[k]=base;R.d[k]=tintCv(base,'#140A2B',.38);R.w[k]=tintCv(base,'#FFFFFF',.6);});}))
     .then(()=>{R.ok=true;return true;}).catch(()=>false);
   return R.ready;
@@ -790,7 +800,7 @@ const headK=sc=>1+(1-sc)*1.3;
 
 // pacing: attack frames are stretched and damage softened so a round lasts about a minute
 const PACE=1.3,DMG_K=.65;
-const TT=window.__T||{};const FACE_UP=TT.fu??4,FACE_TUCK=4,REAR_FWD=TT.rf??-.5,REAR_DOWN=TT.rd??20,REAR_ELBOW=TT.re??-1,LEAD_ELBOW=-1,CAP_R=TT.cap??.5,WIN_SPREAD=TT.wx??16;
+const TT=window.__T||{};const NECK_SHOW=TT.ns??.1,G_LEAD=TT.gl??.55,G_REAR_X=TT.gx??.25,G_REAR_Y=TT.gy??.1,REAR_ELBOW=TT.re??-1,LEAD_ELBOW=-1,CAP_R=TT.cap??.5,WIN_SPREAD=TT.wx??16;
 function makeFighter(c){
   const mv={};for(const k of['punch','kick','low','air']){mv[k]={...BASE[k],...(c.mv[k]||{})};for(const q of['s','a','r'])mv[k][q]=Math.round(mv[k][q]*PACE);}
   mv.special={s:10,a:1,r:10,dmg:0,kb:0,stun:0,m:0,y1:-190,y2:0,reach:80,...c.mv.special};
@@ -2525,7 +2535,7 @@ function drawSpriteBody(f,P,mode,R){
   const rel=(pt,j)=>({x:j.x+(pt.x-P.sh.x)*ra,y:j.y+(pt.y-P.sh.y)*ra});
   // a limb may stretch a little past its length on a full extension, never more
   const reachC=(j,p,len)=>{const dx=p.x-j.x,dy=p.y-j.y,d=Math.hypot(dx,dy),m=len*1.1;return d>m?{x:j.x+dx/d*m,y:j.y+dy/d*m}:p;};
-  const shC={x:(shF.x+shB.x)/2,y:(shF.y+shB.y)/2},ext=pt=>clamp((Math.hypot(pt.x-P.sh.x,pt.y-P.sh.y)-38)/24,0,1),anc=(j,pt)=>{const k=ext(pt);return{x:shC.x+(j.x-shC.x)*k,y:shC.y+(j.y-shC.y)*k};},fH=reachC(shF,rel(P.fH,anc(shF,P.fH)),D.armU+D.armF),bH0=rel(P.bH,anc(shB,P.bH)),kb=1-ext(P.bH),bH=reachC(shB,{x:bH0.x+(shF.x-shB.x)*REAR_FWD*kb,y:bH0.y+REAR_DOWN*kb},D.armU+D.armF);
+  const L=D.armU+D.armF,ext=pt=>clamp((Math.hypot(pt.x-P.sh.x,pt.y-P.sh.y)-38)/24,0,1),fR=rel(P.fH,shF),gF=1-ext(P.fH),fH=reachC(shF,{x:Math.max(fR.x,shF.x+L*G_LEAD*gF),y:fR.y},L),bR=rel(P.bH,shB),gB=1-ext(P.bH),bH=reachC(shB,{x:bR.x+(Math.max(bR.x,shF.x+L*G_REAR_X)-bR.x)*gB,y:bR.y+(Math.min(bR.y,shF.y-L*G_REAR_Y)-bR.y)*gB},L);
   const aF=reachC(hipF,{x:P.fF.x,y:P.fF.y-D.ankle},D.legT+D.legS),aB=reachC(hipB,{x:P.bF.x,y:P.bF.y-D.ankle},D.legT+D.legS);
   const kF=ik2(hipF,aF,D.legT,D.legS,1),kB=ik2(hipB,aB,D.legT,D.legS,1);
   const eF=ik2(shF,fH,D.armU,D.armF,LEAD_ELBOW),eB=ik2(shB,bH,D.armU,D.armF,REAR_ELBOW);
@@ -2540,12 +2550,18 @@ function drawSpriteBody(f,P,mode,R){
   arm(B,shB,eB,bH);leg(B,hipB,kB,aB);leg(V,hipF,kF,aF);
   drawSeg(V.hips,D.hips,hP,hQ,D.hw);
   const hv={x:P.head.x-P.sh.x,y:P.head.y-P.sh.y},vl=Math.hypot(hv.x,hv.y)||1,v={x:hv.x/vl,y:hv.y/vl},nl=D.neckLen||9,chin={x:neck.x+v.x*nl,y:neck.y+v.y*nl};
-  // neck: a wide soft skin column drawn behind the face; the face sits low enough that its bottom tucks under the collar, and the torso is drawn over both
-  const nw=D.neckW||13,np2=cap(np(),{x:neck.x-v.x*8,y:neck.y-v.y*8},chin,nw,nw*.85);
-  {const g=ctx.createLinearGradient(neck.x-v.x*8,neck.y-v.y*8,chin.x,chin.y);g.addColorStop(0,shadeC(D.neck,-.22));g.addColorStop(1,D.neck);ctx.fillStyle=g;ctx.fill(np2);}
-  const ex=exprOf(f),prof=ex==='neutral'&&V.f_profile,face=prof||V['f_'+ex]||V.f_neutral,h=D.face.h,w=h*face.width/face.height,hs=f.hsq||0,cx=prof?D.face.chinX.profile:.5,fd=(D.faceDrop??(nl+FACE_TUCK))-FACE_UP;
+  // head: the face sits on a short neck that is as wide as the real chin in the photo and starts right under it;
+  // neck first, then the shirt over the neck's base, then the face over the neck's top
+  const ex=exprOf(f),prof=ex==='neutral'&&V.f_profile,fk=prof?'f_profile':(V['f_'+ex]?'f_'+ex:'f_neutral'),face=V[fk],h=D.face.h,w=h*face.width/face.height,hs=f.hsq||0,
+    cx=prof?D.face.chinX.profile:.5,C=(R.chin&&R.chin[fk])||{x:.5,w:.3,b:1},ang=Math.atan2(v.y,v.x)+Math.PI/2+(P.ht||0),ax={x:Math.cos(ang),y:Math.sin(ang)},
+    gap=h*NECK_SHOW+(D.neckGap||0),base={x:neck.x+v.x*gap,y:neck.y+v.y*gap},
+    off=(C.x-cx)*w,cpt={x:base.x+ax.x*off,y:base.y+ax.y*off},
+    tw=Math.max(w*.2,C.w*w*.82)/2,bw=tw*1.18,nb={x:neck.x-v.x*7+ax.x*off*.5,y:neck.y-v.y*7+ax.y*off*.5},nt={x:cpt.x+v.x*h*.06,y:cpt.y+v.y*h*.06};
+  {const q=np();q.moveTo(nb.x-ax.x*bw,nb.y-ax.y*bw);q.lineTo(nt.x-ax.x*tw,nt.y-ax.y*tw);q.lineTo(nt.x+ax.x*tw,nt.y+ax.y*tw);q.lineTo(nb.x+ax.x*bw,nb.y+ax.y*bw);q.closePath();
+   const g=ctx.createLinearGradient(nb.x,nb.y,nt.x,nt.y);g.addColorStop(0,shadeC(D.neck,-.25));g.addColorStop(.6,shadeC(D.neck,-.05));g.addColorStop(1,shadeC(D.neck,-.18));ctx.fillStyle=g;ctx.fill(q);}
   drawSeg(V.torso,D.torso,tP,tQ,D.tw);
-  ctx.save();ctx.translate(chin.x+v.x*-fd,chin.y+v.y*-fd);ctx.rotate(Math.atan2(v.y,v.x)+Math.PI/2+(P.ht||0));ctx.scale(1+hs*.16,1-hs*.13);ctx.drawImage(face,-w*cx,-h,w,h);ctx.restore();
+  // the image's chin bottom (C.b) lands exactly on the top of the visible neck
+  ctx.save();ctx.translate(base.x,base.y);ctx.rotate(ang);ctx.scale(1+hs*.16,1-hs*.13);ctx.drawImage(face,-w*cx,-h*C.b,w,h);ctx.restore();
   if(D.panel&&V.panel&&!f.noPanel){const im=V.panel,ang=Math.atan2(fH.y-shF.y,fH.x-shF.x),sc=D.panel.len/im.height;
     ctx.save();ctx.translate(fH.x,fH.y);ctx.rotate(ang-Math.PI/2);ctx.scale(sc,sc);ctx.drawImage(im,-im.width/2,-D.panel.back/sc);ctx.restore();}
   if(f.bigArm){drawSeg(V.uarm,D.uarm,shF,eF,D.uw);const im=propImg(f.c.id,'flexed_arm');if(im){const s=(D.armF*2.1)/im.height;ctx.save();ctx.translate(eF.x,eF.y);ctx.rotate(Math.atan2(fH.y-eF.y,fH.x-eF.x)-Math.PI/2);ctx.scale(s,s);ctx.drawImage(im,-im.width*.5,-im.height*.12);ctx.restore();}else drawSeg(V.farm,D.farm,eF,fH,D.fw,D.armF);}
