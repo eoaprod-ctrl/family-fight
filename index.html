@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>קרב משפחתי</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Ctext y=%2252%22 font-size=%2252%22%3E%F0%9F%A5%8A%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3334,6 +3334,12 @@ function fit(){
 addEventListener('resize',fit);
 addEventListener('orientationchange',()=>setTimeout(fit,200));
 
+/* no double-tap / pinch zoom during a fight (iOS Safari ignores touch-action on fast repeated taps) */
+(()=>{let lastT=0;const G=$('#game');
+  G.addEventListener('touchend',e=>{const now=e.timeStamp||Date.now();if(now-lastT<350&&!e.target.closest('#ov')){e.preventDefault();}lastT=now;},{passive:false});
+  ['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,e=>{if(G.classList.contains('on'))e.preventDefault();},{passive:false}));
+  G.addEventListener('dblclick',e=>e.preventDefault());
+  document.addEventListener('touchmove',e=>{if(G.classList.contains('on')&&e.touches&&e.touches.length>1)e.preventDefault();},{passive:false});})();
 renderTitle();
 {const b=document.getElementById('boot');if(b){b.style.transition='opacity .35s';b.style.opacity=0;setTimeout(()=>b.remove(),400);}}
 })();
