@@ -1214,8 +1214,11 @@ document.addEventListener('click',e=>{
   idbReq('readwrite',st=>st.delete('music'));const was=Music.on&&MusicA.kind==='fight';setCustomTrack(null);refreshOptions();toast('חזרנו לשירי הקרב המקוריים.');if(was){MusicA.cur=null;playTrack('fight');}
 });
 document.addEventListener('click',e=>{const b=e.target.closest('[data-mvol]');if(!b)return;settings.musicVol=b.dataset.mvol;saveSettings();applyMusicVol();$$('[data-mvol]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.mvol===settings.musicVol));});
+// with the game music off, the phone may keep playing the user's own music app (e.g. a streaming app) under the game's sounds
+function applyAudioSession(){try{if(navigator.audioSession)navigator.audioSession.type=settings.music?'auto':'ambient';}catch(e){}}
+applyAudioSession();
 function setOption(k){
-  settings[k]=!settings[k];saveSettings();
+  settings[k]=!settings[k];saveSettings();if(k==='music')applyAudioSession();
   if(k==='music'){if(!settings.music)stopMusic();else if(running||(game&&game.phase==='over'))startMusic();else menuMusic();}
   if(k==='vibe'&&settings.vibe)vibe(30);
   if(k==='sound'&&settings.sound)sfx('click');
@@ -1228,7 +1231,7 @@ function optionsHTML(part='all'){
     <button type="button" data-set="pfx" aria-pressed="${settings.pfx}">✨ אפקטים</button>
     ${CAN_VIBE?`<button type="button" data-set="vibe" aria-pressed="${settings.vibe}">📳 רטט</button>`:''}
   </div>`,rows=`<div class="musicrow"><span class="lbl">עוצמת מוזיקה</span><div class="seg volseg" role="group" aria-label="עוצמת מוזיקה">${[['low','שקט'],['mid','רגיל'],['high','חזק']].map(([k,t])=>`<button type="button" data-mvol="${k}" aria-pressed="${settings.musicVol===k}">${t}</button>`).join('')}</div></div>
-  <div class="musicrow"><label class="btn ghost">🎶 מוזיקה משלי<input type="file" accept="audio/*" data-music="pick" hidden></label>${Custom.name?`<span class="mname" title="${esc(Custom.name)}">${esc(Custom.name)}</span><button type="button" class="btn ghost" data-music="reset">חזרה לשירי הקרב</button>`:'<span class="mname muted">קובץ שמע מהמכשיר שיתנגן בקרבות במקום שירי הקרב.</span>'}</div>`;
+  <div class="musicrow"><label class="btn ghost">🎶 מוזיקה משלי<input type="file" accept=".mp3,.m4a,.aac,.wav,.ogg,.oga,.opus,.flac,audio/mpeg,audio/mp4,audio/aac,audio/wav,audio/x-wav,audio/ogg,audio/flac,audio/x-m4a" data-music="pick" hidden></label>${Custom.name?`<span class="mname" title="${esc(Custom.name)}">${esc(Custom.name)}</span><button type="button" class="btn ghost" data-music="reset">חזרה לשירי הקרב</button>`:'<span class="mname muted">קובץ שמע מהמכשיר שיתנגן בקרבות במקום שירי הקרב.</span>'}</div>`;
   return `<div class="setopts" data-part="${part}">${part==='rows'?'':seg}${part==='seg'?'':rows}</div>`;
 }
 document.addEventListener('click',e=>{const b=e.target.closest('[data-set]');if(b)setOption(b.dataset.set);});
