@@ -157,6 +157,12 @@ img{max-width:100%}
 .selinfo{margin-top:14px}.selinfo summary{cursor:pointer;font-weight:800;color:var(--muted);padding:6px 0;list-style:none}.selinfo summary::before{content:"▸ ";}.selinfo[open] summary::before{content:"▾ "}
 .selinfo .dets{margin-top:10px}
 .selfoot{margin-top:14px;display:grid;gap:12px}
+.accf{display:grid;gap:10px;max-width:380px}.accf label{display:grid;gap:4px;font-weight:700}.accf input{font:inherit;font-size:17px;padding:8px 10px;border:3px solid var(--ink);border-radius:10px;background:#fff;color:var(--ink);direction:ltr;text-align:right}
+.accf .row{display:flex;gap:8px;flex-wrap:wrap}.acc-err{color:#C0182A;font-weight:700;min-height:1.2em}.acc-ok{color:#16804A;font-weight:700}
+.linkb{background:none;border:0;color:var(--ink);text-decoration:underline;font:inherit;cursor:pointer;padding:0}
+.roomcode{font:900 44px Bungee,Impact,sans-serif;letter-spacing:6px;direction:ltr;text-align:center;background:#FFE08A;border:3px solid var(--ink);border-radius:14px;padding:6px 10px;margin:8px 0}
+.onvs{display:flex;align-items:center;justify-content:center;gap:16px;margin:10px 0}.onvs .x{font:900 26px Bungee,Impact,sans-serif}
+#lock{position:fixed;inset:0;z-index:60;background:rgba(10,5,24,.94);display:grid;place-items:center;padding:20px;direction:rtl}#lock[hidden]{display:none}#lock .panel{max-width:380px}
 .ctlw{max-width:760px;margin:0 auto;padding:0 16px 30px;display:grid;gap:16px}
 .ctlcard{background:var(--panel);border:3px solid var(--ink);border-radius:16px;padding:14px 16px;box-shadow:4px 4px 0 var(--ink);color:var(--ink)}.ctlcard h3{margin:0 0 6px;font-size:20px}
 .keytabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin:8px 0}
@@ -300,6 +306,7 @@ details.helpbox{margin-top:10px;border-top:2px solid var(--line);padding-top:10p
       <button class="btn primary" data-go="select">לבחירת לוחמים</button>
       <button class="btn" data-go="roster">עריכת המשפחה</button>
       <button class="btn" data-go="board">🏆 טבלת שיאים</button>
+      <button class="btn" data-go="account">👤 החשבון שלי</button>
     </div>
   </div>
 </section>
@@ -310,6 +317,7 @@ details.helpbox{margin-top:10px;border-top:2px solid var(--line);padding-top:10p
     <h2>טבלת שיאים</h2>
     <button class="btn primary" data-go="select">לקרב</button>
   </header>
+  <div id="famBoard" class="boardb"></div>
   <div id="boardBody" class="boardb"></div>
 </section>
 
@@ -342,6 +350,7 @@ details.helpbox{margin-top:10px;border-top:2px solid var(--line);padding-top:10p
       <button type="button" data-mode="cpu">נגד המחשב</button>
       <button type="button" data-mode="arcade">טורניר</button>
       <button type="button" data-mode="2p">2 שחקנים</button>
+      <button type="button" data-mode="online">אונליין</button>
     </div>
     <div class="seg" id="diffSeg" role="group" aria-label="רמת קושי">
       <button type="button" data-diff="easy">קל</button>
@@ -370,6 +379,27 @@ details.helpbox{margin-top:10px;border-top:2px solid var(--line);padding-top:10p
     <div class="kb" id="kb2"><strong>שחקן 2:</strong> חצים לתזוזה, <kbd>,</kbd> מכה (רצף), <kbd>.</kbd> בעיטה, <kbd>/</kbd> מיוחד, <kbd>M</kbd> הגנה</div>
   </div></details>
 </section>
+
+<section id="online" class="screen">
+  <header class="bar">
+    <button class="btn ghost" data-go="select">חזרה</button>
+    <h2>קרב אונליין</h2>
+    <button class="btn ghost" data-go="account">👤 החשבון</button>
+  </header>
+  <div class="ctlw"><div class="ctlcard" id="onBody"></div></div>
+</section>
+
+<section id="account" class="screen">
+  <header class="bar">
+    <button class="btn ghost" data-go="title">חזרה</button>
+    <h2>החשבון שלי</h2>
+    <button class="btn primary" data-go="select">לקרב</button>
+  </header>
+  <div class="ctlw"><div class="ctlcard" id="accBody"></div></div>
+</section>
+
+<div id="lock" hidden><div class="panel"><h2>🔒 קרב משפחתי</h2><p class="quote" id="lockName"></p>
+  <div class="actions"><button class="btn primary" data-lock="bio">פתיחה בטביעת אצבע או בזיהוי פנים</button><button class="btn ghost" data-lock="pw">כניסה עם סיסמה</button></div><p class="note" id="lockErr"></p></div></div>
 
 <section id="controls" class="screen">
   <header class="bar">
@@ -783,6 +813,9 @@ function show(id){
   if(id==='moves')renderMoves();
   if(id==='board')renderBoard();
   if(id==='controls')renderKeys();
+  if(id==='online')renderOnline();
+  if(id==='account')renderAccount();
+  if(!['game','online','account'].includes(id)&&NET.ch)netClose();
   window.scrollTo(0,0);
 }
 document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g)show(g.dataset.go);});
@@ -861,7 +894,7 @@ function renderSelect(){
   $('#setWrap').innerHTML=optionsHTML('seg');$('#setWrap2').innerHTML=optionsHTML('rows');
   $$('#modeSeg button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.mode===mode));
   $$('#diffSeg button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.diff===diff));
-  $('#diffSeg').style.display=mode==='cpu'?'':'none';$('#pickSeg').style.display=mode==='arcade'?'none':'';if(mode==='arcade')pickSide=0;renderDaily();
+  $('#diffSeg').style.display=mode==='cpu'?'':'none';$('#pickSeg').style.display=(mode==='arcade'||mode==='online')?'none':'';if(mode==='arcade'||mode==='online')pickSide=0;renderDaily();
   const pk=$$('#pickSeg button');pk[0].textContent=mode!=='2p'?'אני':'שחקן 1';pk[1].textContent=mode!=='2p'?'המחשב':'שחקן 2';pk.forEach(x=>x.setAttribute('aria-pressed',+x.dataset.pick===pickSide));
   prewarm(true);
   $('#note').textContent=(mode==='2p'&&TOUCH)?'מצב 2 שחקנים עובד עם מקלדת. בטלפון עדיף לשחק נגד המחשב.':'';
@@ -871,12 +904,12 @@ function prewarm(withPair){clearTimeout(warmT);warmT=setTimeout(()=>{const R=ros
   Promise.all([...R.map(getImg),...rigsFor(pair).map(loadRig)]).then(()=>{if(running||$('#game').classList.contains('on'))return;
     prepareStage(R,resDPR(viewScale()));const t=document.createElement('canvas').getContext('2d');t.drawImage(bgCv,0,0,1,1);t.drawImage(floorCv,0,0,1,1);}).catch(()=>{});},350);}
 $('#select').addEventListener('click',e=>{
-  const t=e.target.closest('.tile');if(t){sel[pickSide]=+t.dataset.i;if(mode!=='arcade')pickSide=pickSide?0:1;else if(sel[1]===sel[0])sel[1]=(sel[0]+1)%roster().length;sfx('click');renderSelect();return;}
+  const t=e.target.closest('.tile');if(t){sel[pickSide]=+t.dataset.i;if(mode!=='arcade'&&mode!=='online')pickSide=pickSide?0:1;else if(sel[1]===sel[0])sel[1]=(sel[0]+1)%roster().length;sfx('click');renderSelect();return;}
   const pk=e.target.closest('[data-pick]');if(pk){pickSide=+pk.dataset.pick;renderSelect();return;}
   const m=e.target.closest('[data-mode]');if(m){mode=m.dataset.mode;renderSelect();return;}
   const d=e.target.closest('[data-diff]');if(d){diff=d.dataset.diff;renderSelect();}
 });
-$('#fightBtn').addEventListener('click',()=>{ARC=null;if(mode==='arcade')arcStart();startMatch();});
+$('#fightBtn').addEventListener('click',()=>{ARC=null;if(mode==='online'){show('online');return;}if(mode==='arcade')arcStart();startMatch();});
 
 /* ---------- engine ---------- */
 const W=960,H=540,GROUND=462;
@@ -1166,7 +1199,7 @@ async function startMatch(){
   await Promise.all([...R.map(getImg),...rigsFor(pairM).map(loadRig)]);await fontsReady;starting=false;
   prepareStage(R);resetCam();
   const arc=mode==='arcade'&&ARC;
-  game={mode:arc?'cpu':mode==='arcade'?'cpu':mode,diff:arc?arcDiff():diff,arcade:!!arc,daily:dailyOn?dailyToday().key:null,frames:0,p:[makeFighter(R[sel[0]]),makeFighter(R[sel[1]])],round:1,combo:[{n:0,t:0},{n:0,t:0}],
+  game={net:mode==='online'&&NET.live?NET.live:null,mode:arc?'cpu':mode==='arcade'?'cpu':mode,diff:arc?arcDiff():diff,arcade:!!arc,daily:dailyOn?dailyToday().key:null,frames:0,p:[makeFighter(R[sel[0]]),makeFighter(R[sel[1]])],round:1,combo:[{n:0,t:0},{n:0,t:0}],
     st:[0,1].map(()=>({hits:0,maxCombo:0,parries:0,fin:0,taken:0,rTaken:0,jumps:0,blocks:0,ko:0,perfect:0}))};dailyOn=false;
   $('#ov').hidden=true;show('game');fit();MusicA.kind=null;startMusic();duckMusic(.3);
   startRound();
@@ -1198,7 +1231,7 @@ const RANKS=[{n:'ארד',at:0},{n:'כסף',at:6000},{n:'זהב',at:18000},{n:'י
 const MRANKS=[0,900,1600,2500];
 function rankOf(total){let i=0;RANKS.forEach((r,k)=>{if(total>=r.at)i=k;});return i;}
 const rankTag=i=>`<span class="rankb r${i}">${RANKS[i].n}</span>`;
-const DMUL={easy:.8,normal:1,hard:1.4};
+const DMUL={easy:.8,normal:1,hard:1.4,online:1.2};
 function scoreOf(S,f,won,dif){const part=[['ניצחונות בסיבוב',f.wins*300],['נוקאאוטים',S.ko*100],['סיבוב מושלם',S.perfect*250],['מהלכי סיום',S.fin*200],['מכות',S.hits*5],['קומבו הכי ארוך',S.maxCombo*20],['חסימות מושלמות',S.parries*40]];
   if(won)part.push(['בונוס ניצחון',400]);const sum=part.reduce((a,b)=>a+b[1],0);return{part,mul:DMUL[dif]||1,total:Math.round(sum*(DMUL[dif]||1))};}
 let ARC=null,dailyOn=false;
@@ -1217,11 +1250,11 @@ function renderBoard(){const P=profGet(),ri=rankOf(P.total),nx=RANKS[ri+1];
   $('#boardBody').innerHTML=`<div class="me"><label>השם שלי: <input id="pName" maxlength="14" value="${esc(P.name)}" placeholder="איך קוראים לך?"></label>${rankTag(ri)}<span>סה״כ ${P.total} נקודות${nx?` · עוד ${nx.at-P.total} ל${nx.n}`:''}</span><span>${P.wins} ניצחונות מתוך ${P.played} קרבות</span></div>
   <table><tr><th>#</th><th>שחקן</th><th>לוחם</th><th>סוג</th><th>ניקוד</th><th>דרגה</th></tr>${rows||'<tr><td colspan="6">עוד אין שיאים. צאו לקרב!</td></tr>'}</table>
   <p class="lead" style="margin-top:14px">הדרגות: ארד, כסף (6,000), זהב (18,000), יהלום (45,000). כל קרב נגד המחשב, טורניר או אתגר יומי מוסיף נקודות. הטבלה נשמרת במכשיר הזה.</p>`;
-  $('#pName').addEventListener('change',e=>{const o=profGet();o.name=e.target.value.trim().slice(0,14);profSet(o);});}
+  $('#pName').addEventListener('change',e=>{const o=profGet();o.name=e.target.value.trim().slice(0,14);profSet(o);});familyBoard();}
 function saveScore(s,kind,won,fname){const o=profGet();o.total+=s;o.played++;if(won)o.wins++;const r=MRANKS.reduce((a,v,i)=>s>=v?i:a,0);
-  o.best.push({s,kind,f:fname,name:o.name,r,d:dayKey()});o.best.sort((a,b)=>b.s-a.s);o.best=o.best.slice(0,30);profSet(o);return{o,r};}
+  o.best.push({s,kind,f:fname,name:o.name,r,d:dayKey()});sbScore(s,kind,won,fname);o.best.sort((a,b)=>b.s-a.s);o.best=o.best.slice(0,30);profSet(o);return{o,r};}
 function scorePanel(sc,extra){return `<div class="scorebox">${sc.part.filter(x=>x[1]).map(x=>`<div>${x[0]}<b>${x[1]}</b></div>`).join('')}${sc.mul!==1?`<div>מכפיל קושי<b>×${sc.mul}</b></div>`:''}${extra||''}<div class="tot">ניקוד<b>${sc.total}</b></div></div>`;}
-function nextRound(){if(game.mode==='demo')return demoOver();if(game.p.some(f=>f.wins>=2)||game.round>=5)return matchOver();if(autoRounds){game.round++;startRound();return;}roundBreak();}
+function nextRound(){if(game.mode==='demo')return demoOver();if(game.p.some(f=>f.wins>=2)||game.round>=5)return matchOver();if(autoRounds||game.net){game.round++;startRound();return;}roundBreak();}
 // between rounds: show the score and let the players continue or go back to fighter select
 function roundBreak(){
   game.phase='break';running=false;duckMusic(.12);
@@ -1238,13 +1271,13 @@ function matchOver(){
   game.phase='over';running=false;duckMusic(.12);sfx('win');vibe([30,40,30,40,80]);
   const[a,b]=game.p,w=a.wins>b.wins?a:b.wins>a.wins?b:null;
   const ov=$('#ov');let mid='',acts=`<button class="btn primary" data-ov="again">עוד קרב</button><button class="btn" data-ov="select">בחירת לוחמים</button>`,head=w?`הניצחון של ${esc(w.c.name)}!`:'תיקו';
-  if(game.mode==='cpu'&&game.st){const S=game.st[0],won=w===a,sc=scoreOf(S,a,won,game.diff);let extra='';
+  if((game.mode==='cpu'||game.net)&&game.st){const mi=meI(),me=game.p[mi],S=game.st[mi],won=w===me,sc=scoreOf(S,me,won,game.net?'online':game.diff);let extra='';
     if(game.daily){const d=dailyToday();const ok=won&&dailyMet(d.c.k,S,a);if(ok){sc.total+=500;const o=profGet();o.daily[d.key]=1;profSet(o);}extra=`<div>${ok?'אתגר יומי הושלם!':'האתגר היומי לא הושלם'}<b>${ok?'+500':'0'}</b></div>`;}
     if(game.arcade&&ARC){ARC.total+=sc.total;const n=ARC.i+1,L=ARC.order.length;
       if(won&&n>=L){const{o}=saveScore(ARC.total,'טורניר',true,a.c.name);head='אלוף המשפחה!';mid=`<p class="quote">ניצחת את כל ${L} היריבים</p><p class="score">${ARC.total}</p>${rankTag(rankOf(o.total))}`;ARC=null;acts=`<button class="btn primary" data-ov="board">🏆 טבלת שיאים</button><button class="btn" data-ov="select">בחירת לוחמים</button>`;}
       else if(won){head=`ניצחון ${n} מתוך ${L}`;const R=roster(),nx=R[ARC.order[ARC.i+1]];mid=scorePanel(sc,extra)+`<p class="quote">סה״כ בטורניר: ${ARC.total} · היריב הבא: ${esc(nx.name)}</p>`;acts=`<button class="btn primary" data-ov="arcNext">לקרב הבא</button><button class="btn" data-ov="select">יציאה</button>`;}
       else{const{o}=saveScore(ARC.total,'טורניר',false,a.c.name);head='הטורניר נגמר';mid=`<p class="quote">הגעת עד קרב ${n} מתוך ${L}</p><p class="score">${ARC.total}</p>${rankTag(rankOf(o.total))}`;ARC=null;acts=`<button class="btn primary" data-ov="arcAgain">טורניר חדש</button><button class="btn" data-ov="board">🏆 שיאים</button><button class="btn" data-ov="select">בחירת לוחמים</button>`;}}
-    else{const{o}=saveScore(sc.total,game.daily?'אתגר יומי':'נגד המחשב',won,a.c.name);mid=scorePanel(sc,extra)+`<p class="quote">הדרגה שלך: ${rankTag(rankOf(o.total))} · סה״כ ${o.total}</p>`;}}
+    else{const{o}=saveScore(sc.total,game.net?'אונליין':game.daily?'אתגר יומי':'נגד המחשב',won,me.c.name);if(game.net)acts=game.net.host?`<button class="btn primary" data-ov="netAgain">עוד קרב</button><button class="btn" data-ov="netLeave">יציאה</button>`:`<p class="quote">ממתינים שהמארח יתחיל עוד קרב…</p><button class="btn" data-ov="netLeave">יציאה</button>`;mid=scorePanel(sc,extra)+`<p class="quote">הדרגה שלך: ${rankTag(rankOf(o.total))} · סה״כ ${o.total}</p>`;}}
   ov.innerHTML=`<div class="panel">${w?avatarT(w.c,mid?'big':'huge'):''}
     <h2>${head}</h2>
     ${w&&w.c.quote?`<p class="quote">״${esc(w.c.quote)}״</p>`:''}
@@ -1258,6 +1291,8 @@ $('#ov').addEventListener('click',e=>{
   if(a==='demoOther'&&demo)return startDemo(demo.id,demo.kind==='finish'?'special':'finish',demo.from);
   if(a==='demoBack'){$('#ov').hidden=true;show(demo?demo.from:'select');return;}
   if(a==='nextRound')return resumeRound();
+  if(a==='netAgain'&&game&&game.net&&game.net.host){{const R=roster();netSend({e:'start',h:R[sel[0]].id,g:R[sel[1]].id});}return startMatch();}
+  if(a==='netLeave'){netClose('אתם יצאתם מהקרב');$('#ov').hidden=true;show('online');return;}
   if(a==='arcNext'&&ARC){ARC.i++;sel[1]=ARC.order[ARC.i];return startMatch();}
   if(a==='arcAgain'){mode='arcade';arcStart();return startMatch();}
   if(a==='board'){$('#ov').hidden=true;show('board');return;}
@@ -1351,6 +1386,7 @@ function demoOver(){
 }
 function togglePause(v){
   if(!game||game.phase==='over'||game.phase==='break')return;
+  if(game.net){const ov=$('#ov');if(v===false||!ov.hidden){ov.hidden=true;return;}ov.innerHTML=`<div class="panel"><h2>קרב אונליין</h2><p class="quote">הקרב ממשיך לרוץ</p><div class="actions"><button class="btn primary" data-ov="resume">חזרה לקרב</button><button class="btn" data-ov="netLeave">יציאה מהקרב</button></div></div>`;ov.hidden=false;return;}
   paused=v??!paused;const ov=$('#ov');
   duckMusic(paused?.07:.3);
   if(paused){ov.innerHTML=`<div class="panel"><h2>הפסקה</h2><p class="quote">סיבוב ${game.round}</p><div class="setrow">${optionsHTML('seg')}</div><div class="actions"><button class="btn primary" data-ov="resume">המשך</button><button class="btn" data-ov="select">יציאה לבחירת לוחמים</button></div></div>`;ov.hidden=false;keys.clear();touchHeld.clear();}
@@ -1360,7 +1396,8 @@ $('#pauseBtn').addEventListener('click',()=>togglePause());
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&running&&!paused)togglePause(true);});
 
 /* ---------- input ---------- */
-function mapsFor(i){return(game&&game.mode==='cpu')?(i===0?MAP:[]):[MAP[i]];}
+const meI=()=>(game&&game.net&&!game.net.host)?1:0;let NET_APPLY=false;
+function mapsFor(i){return(game&&(game.mode==='cpu'||game.net))?(i===meI()?MAP:[]):[MAP[i]];}
 addEventListener('keydown',e=>{
   if(!$('#game').classList.contains('on'))return;
   if(e.code==='Escape'||e.code==='KeyP'){togglePause();return;}
@@ -1392,21 +1429,23 @@ joy.addEventListener('pointerup',joyEnd);joy.addEventListener('pointercancel',jo
 const spBtn=$('#spBtn');let spFill=-1,spReady=null;
 function syncSpecialBtn(){
   if(!TOUCH||!game)return;
-  const f=game.p[0],r=Math.min(1,f.meter/f.c.sp.cost),q=Math.round(r*40)/40;
+  const f=game.p[meI()],r=Math.min(1,f.meter/f.c.sp.cost),q=Math.round(r*40)/40;
   if(q!==spFill){spFill=q;spBtn.style.setProperty('--fill',q);spBtn.style.setProperty('--spc',f.c.color);}
   const ready=r>=1||(game.phase==='finish'&&game.finAtt===f);if(ready!==spReady){spReady=ready;spBtn.classList.toggle('ready',ready);}
 }
 $$('#pad .tb').forEach(b=>{
   const act=b.dataset.act;
-  const on=e=>{e.preventDefault();try{b.setPointerCapture(e.pointerId);}catch(_){}b.classList.add('down');touchHeld.add(act);tapTouch.add(act);if(game&&!paused&&game.mode!=='demo'&&['attack','kick','special'].includes(act))game.p[0].buf[act]=8;};
+  const on=e=>{e.preventDefault();try{b.setPointerCapture(e.pointerId);}catch(_){}b.classList.add('down');touchHeld.add(act);tapTouch.add(act);if(game&&!paused&&game.mode!=='demo'&&['attack','kick','special'].includes(act))game.p[meI()].buf[act]=8;};
   const off=()=>{b.classList.remove('down');touchHeld.delete(act);};
   b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('lostpointercapture',off);
   b.addEventListener('contextmenu',e=>e.preventDefault());
 });
 function gatherInput(f,i){
+  if(game.net&&i!==meI()){f.held={...game.net.rh};return;}
   const ms=mapsFor(i),h={};
-  for(const act of['left','right','up','down','block'])h[act]=ms.some(m=>m[act].some(c=>keys.has(c)||tapKeys.has(c)))||(i===0&&(touchHeld.has(act)||tapTouch.has(act)));
+  for(const act of['left','right','up','down','block'])h[act]=ms.some(m=>m[act].some(c=>keys.has(c)||tapKeys.has(c)))||(i===meI()&&(touchHeld.has(act)||tapTouch.has(act)));
   f.held=h;
+  if(game.net)netLocal(f,h);
 }
 
 /* ---------- AI ---------- */
@@ -1541,7 +1580,7 @@ function stepFighter(f,o){
   if(!air){
     f.jumps=0;
     if(f.buf.special){
-      if(f.meter>=f.c.sp.cost){f.meter-=f.c.sp.cost;startAtk(f,'special');game.banners[game.p.indexOf(f)]={text:f.c.sp.name,color:f.c.color,t:70};sfx('special',0,f);if(game.mode==='cpu')vibe(f===game.p[0]?25:[15,30,15]);return;}
+      if(f.meter>=f.c.sp.cost){f.meter-=f.c.sp.cost;startAtk(f,'special');game.banners[game.p.indexOf(f)]={text:f.c.sp.name,color:f.c.color,t:70};sfx('special',0,f);if(game.mode==='cpu'||game.net)vibe(f===game.p[meI()]?25:[15,30,15]);return;}
       f.buf.special=0;
     }
     if(f.buf.attack){
@@ -1624,6 +1663,7 @@ function checkHits(a,b){
 function applyHit(att,def,d,px,py,o={}){
   if(game.phase!=='fight')return;
   if(def.inv>0||def.state==='down')return;
+  if(game.net){if(!game.net.host&&!NET_APPLY)return;if(game.net.host)netSend({e:'hit',a:game.p.indexOf(att),d,px,py,o});}
   const dir=Math.sign(def.x-att.x)||att.facing;
   if(def.grab)releaseGrab(def);
   const dd=def.atk&&def.mv[def.atk.type];
@@ -1631,7 +1671,7 @@ function applyHit(att,def,d,px,py,o={}){
   const rage=att.hp>0&&att.hp<att.maxHp*.3;if(rage&&!att._rage){att._rage=1;pop(att.x,att.y-240*att.sc,'כעס!','#FF3B3B',1.4);vibe(30);}
   const dmgFull=Math.max(1,Math.round((o.fixed?d.dmg:d.dmg*att.power)*DMG_K*(rage?1.15:1)));
   const blk=blocking(def);
-  if(game.mode==='cpu'){const me=game.p[0];if(def===me)vibe(blk?18:dmgFull>=10?[45,25,60]:40);else if(att===me)vibe(blk?10:dmgFull>=10?[30,15,30]:18);}
+  if(game.mode==='cpu'||game.net){const me=game.p[meI()];if(def===me)vibe(blk?18:dmgFull>=10?[45,25,60]:40);else if(att===me)vibe(blk?10:dmgFull>=10?[30,15,30]:18);}
   else if(game.mode==='2p')vibe(blk?12:dmgFull>=10?[40,20,50]:28);
   const ia=game.p.indexOf(att),idf=game.p.indexOf(def),S=game.st;
   // perfect block: block pressed just before the hit lands -> no damage, the attacker is thrown off balance
@@ -1639,7 +1679,7 @@ function applyHit(att,def,d,px,py,o={}){
   if(blk&&(def.blockT||99)<=PARRY_WIN&&!o.fixed&&att.atk&&att.atk.type!=='special'&&(!cpuDef||Math.random()<({easy:0,normal:.12,hard:.3}[game.diff]||0))){
     att.atk=null;att.stun=26;att.state='hit';att.vx=-dir*6;def.stun=4;def.meter=Math.min(100,def.meter+20);att.combo=0;
     if(S)S[idf].parries++;pop(px,py-20,'חסימה מושלמת!','#7FE3FF',1.15);shieldFx(px,py,-dir);burst(px,py,'#FFFFFF',14,7);sfx('block');sfx('special',0,def);hitstop=10;shakeAmt=Math.max(shakeAmt,6);
-    if(game.mode!=='cpu'||def===game.p[0])vibe([20,20,60]);return;}
+    if(game.mode==='2p'||def===game.p[meI()])vibe([20,20,60]);return;}
   if(blk){
     if(def.c.counter){def.stun=6;def.state='block';def.vx=dir*2;def.meter+=5;if(Math.abs(att.x-def.x)<160&&att.y>=GROUND&&att.atk&&att.atk.type!=='special'){att.atk=null;att.vx=-dir*7;att.stun=10;att.state='hit';waveFx(def.x-dir*30*def.sc,def.y-120*def.sc,'#9BE3FF',14,7,5);}}
     else{def.hp-=Math.max(1,Math.round(dmgFull*.15));def.stun=10;def.state='block';def.vx=dir*(o.push?d.kb*.75:Math.min(5,d.kb*.8));}
@@ -2302,7 +2342,7 @@ function update(){
   if(shakeAmt>0)shakeAmt*=.85;if(flashT>0)flashT--;
   g.banners.forEach((b,i)=>{if(b&&--b.t<=0)g.banners[i]=null;});
   if(g.phase==='intro'){g.phaseT--;if(g.phaseT===40){sfx('fight');vibe(20);}if(g.phaseT<=0)g.phase='fight';}
-  else if(g.phase==='fight'){Music.bpm=g.timer<600?148:132;if(--g.timer<=0)timeUp();}
+  else if(g.phase==='fight'){Music.bpm=g.timer<600?148:132;if(--g.timer<=0){if(g.net&&!g.net.host)g.timer=0;else{if(g.net)netSend({e:'timeup'});timeUp();}}}
   else if(g.phase==='ko'){
     g.phaseT--;const w=g.roundWinner;
     if(g.phaseT===80&&w&&w.state!=='ko'){for(const f of g.p)if(f.grab)releaseGrab(f);w.state='win';w.koRot=0;w.atk=null;w.stun=0;w.dizzy=0;w.dashT=0;w.vx=0;}
@@ -2320,7 +2360,7 @@ function danceFx(f){
   const a=f.atk;if(!a||a.type!=='special')return;const d=f.mv.special;
   if(d.kind==='dance'&&a.f>=d.s&&a.f<d.s+d.a&&frameN%4===0){note(f.x+(Math.random()-.5)*60,f.y-150*f.sc,Math.random()<.5?'#FFD34D':'#FF7FD0');glint(f.x+(Math.random()-.5)*80,f.y-60-Math.random()*100,'#FFE9A0');}
 }
-function tick(){if(game&&game.phase==='fight')game.frames=(game.frames||0)+1;if(pops.length){pops.forEach(q=>q.t++);pops=pops.filter(q=>q.t<48);}if(hitstop>0){hitstop--;return;}if(slowmo>0){slowmo--;if(slowmo%3)return;}update();}
+function tick(){if(game&&game.net)netTick();if(game&&game.phase==='fight')game.frames=(game.frames||0)+1;if(pops.length){pops.forEach(q=>q.t++);pops=pops.filter(q=>q.t<48);}if(hitstop>0){hitstop--;return;}if(slowmo>0){slowmo--;if(slowmo%3)return;}update();}
 function loop(t){
   if(!running)return;cancelAnimationFrame(loop.id);loop.id=requestAnimationFrame(loop);
   const dt=Math.min(100,t-(last||t));last=t;
@@ -3470,6 +3510,152 @@ function showInstall(){if(STANDALONE||!TOUCH)return;try{if(localStorage.getItem(
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-inst]');if(!b)return;if(b.dataset.inst==='yes'&&instEv){instEv.prompt();try{await instEv.userChoice;}catch(_){}instEv=null;}
   try{localStorage.setItem('familyFighter.instNo','1');}catch(_){}const el=$('#instb');if(el)el.remove();});
 if(IOS)setTimeout(showInstall,2500);
+/* ---------- server (accounts, family leaderboard, online rooms) ---------- */
+// the public project address and its public key; the database itself is protected by row-level security
+const SB_CFG={url:'',key:''};
+const SB_ON=!!(SB_CFG.url&&SB_CFG.key);
+let sb=null,sbUser=null,sbProf=null,sbReady=null;
+function loadScript(src){return new Promise((r,j)=>{const s=document.createElement('script');s.src=src;s.onload=r;s.onerror=j;document.head.appendChild(s);});}
+function sbInit(){if(!SB_ON)return Promise.resolve(null);if(sbReady)return sbReady;
+  sbReady=loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js').then(async()=>{
+    sb=window.supabase.createClient(SB_CFG.url,SB_CFG.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:'ff-auth'}});
+    sb.auth.onAuthStateChange((ev,ses)=>{sbUser=ses?ses.user:null;if(ev==='PASSWORD_RECOVERY'){ACC.view='newpw';show('account');}
+      if(ev==='SIGNED_OUT'){sbProf=null;}if(ses)setTimeout(()=>{sbLoadProf().then(()=>{if($('#account').classList.contains('on'))renderAccount();});},0);});
+    const{data}=await sb.auth.getSession();sbUser=data.session?data.session.user:null;if(sbUser)await sbLoadProf();return sb;}).catch(e=>{console.warn('server',e);sbReady=null;return null;});
+  return sbReady;}
+async function sbLoadProf(){if(!sb||!sbUser){sbProf=null;return null;}
+  let{data}=await sb.from('ff_profiles').select('id,name,total,wins,played').eq('id',sbUser.id).maybeSingle();
+  if(!data){const pend=(()=>{try{return JSON.parse(localStorage.getItem('ff-pend')||'null');}catch(e){return null;}})();
+    if(pend){const r=await sb.rpc('ff_join',{p_name:pend.name,p_code:pend.code});if(!r.error){try{localStorage.removeItem('ff-pend');}catch(e){}({data}=await sb.from('ff_profiles').select('id,name,total,wins,played').eq('id',sbUser.id).maybeSingle());}else ACC.err='קוד המשפחה לא נכון. בקשו מנדב את הקוד.';}}
+  sbProf=data||null;if(sbProf){const o=profGet();if(!o.name){o.name=sbProf.name;profSet(o);}}return sbProf;}
+function sbScore(s,kind,won,fname){if(!sb||!sbProf)return;sb.from('ff_scores').insert({score:Math.round(s),kind,fighter:fname,won:!!won}).then(()=>sbLoadProf()).catch(()=>{});}
+async function familyBoard(){const el=$('#famBoard');if(!el)return;if(!SB_ON){el.innerHTML='';return;}await sbInit();
+  if(!sbProf){el.innerHTML=`<p class="lead">🏠 טבלת המשפחה המשותפת מופיעה אחרי <button class="linkb" data-go="account">כניסה לחשבון</button>.</p>`;return;}
+  const{data,error}=await sb.from('ff_profiles').select('name,total,wins,played').order('total',{ascending:false}).limit(30);
+  if(error){el.innerHTML='<p class="lead">לא הצלחנו לטעון את טבלת המשפחה.</p>';return;}
+  el.innerHTML=`<h3 style="margin:10px 0 6px">🏠 טבלת המשפחה</h3><table><tr><th>#</th><th>שחקן</th><th>ניקוד</th><th>ניצחונות</th><th>דרגה</th></tr>${data.map((r,i)=>`<tr${r.name===sbProf.name?' style="background:#FFF4C8"':''}><td>${i+1}</td><td>${esc(r.name)}</td><td><b>${r.total}</b></td><td>${r.wins}/${r.played}</td><td>${rankTag(rankOf(r.total))}</td></tr>`).join('')}</table>`;}
+
+/* ---------- account screen: sign in, sign up, forgotten password, biometric unlock ---------- */
+const ACC={view:'login',err:'',ok:''};
+const BIO_KEY='ff-bio';
+const bioGet=()=>{try{return JSON.parse(localStorage.getItem(BIO_KEY)||'null');}catch(e){return null;}};
+const b64u=b=>btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const ub64=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
+const BIO_OK=!!(window.PublicKeyCredential&&navigator.credentials&&window.isSecureContext);
+async function bioEnable(){const u=sbUser;if(!u)return false;
+  const cred=await navigator.credentials.create({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),rp:{name:'קרב משפחתי',id:location.hostname},
+    user:{id:crypto.getRandomValues(new Uint8Array(16)),name:u.email,displayName:(sbProf&&sbProf.name)||u.email},
+    pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'discouraged'},timeout:60000}});
+  if(!cred)return false;try{localStorage.setItem(BIO_KEY,JSON.stringify({id:b64u(cred.rawId),uid:u.id}));}catch(e){}return true;}
+async function bioCheck(){const b=bioGet();if(!b)return false;
+  const a=await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),allowCredentials:[{type:'public-key',id:ub64(b.id)}],userVerification:'required',timeout:60000,rpId:location.hostname}});
+  return !!a;}
+function accForm(fields,btn,act,extra=''){return `<form class="accf" data-acc="${act}">${fields}<div class="acc-err">${esc(ACC.err)}</div>${ACC.ok?`<div class="acc-ok">${esc(ACC.ok)}</div>`:''}<div class="row"><button class="btn primary" type="submit">${btn}</button></div>${extra}</form>`;}
+const fEmail='<label>מייל<input name="email" type="email" autocomplete="email" required></label>';
+async function renderAccount(){const el=$('#accBody');
+  if(!SB_ON){el.innerHTML='<h3>👤 החשבון שלי</h3><p class="lead">החשבונות, טבלת המשפחה המשותפת והקרב האונליין יופעלו ברגע שהשרת של המשחק יחובר. בינתיים הניקוד נשמר בטלפון הזה.</p>';return;}
+  el.innerHTML='<p class="lead">טוען…</p>';await sbInit();if(!sb){el.innerHTML='<p class="lead">אין חיבור לשרת כרגע. בדקו את האינטרנט ונסו שוב.</p>';return;}
+  if(ACC.view==='newpw'){el.innerHTML='<h3>🔑 סיסמה חדשה</h3>'+accForm('<label>סיסמה חדשה (לפחות 8 תווים)<input name="pw" type="password" minlength="8" autocomplete="new-password" required></label><label>שוב את הסיסמה<input name="pw2" type="password" minlength="8" autocomplete="new-password" required></label>','שמירת הסיסמה','newpw');return;}
+  if(sbUser){const P=sbProf,bio=bioGet();
+    el.innerHTML=`<h3>👋 שלום ${esc(P?P.name:sbUser.email)}</h3>${P?`<p class="lead">${rankTag(rankOf(P.total))} · ${P.total} נקודות · ${P.wins} ניצחונות מתוך ${P.played} קרבות</p>`:`<p class="acc-err">${esc(ACC.err||'החשבון עוד לא שויך למשפחה.')}</p>${accForm('<label>קוד המשפחה<input name="code" autocomplete="off" required></label><label>השם במשחק<input name="name" maxlength="20" required></label>','הצטרפות למשפחה','join')}`}
+      <div class="actions" style="justify-content:flex-start;flex-wrap:wrap">${BIO_OK?(bio&&bio.uid===sbUser.id?'<button class="btn" data-accb="bioOff">ביטול כניסה בטביעת אצבע</button>':'<button class="btn primary" data-accb="bioOn">הפעלת כניסה בטביעת אצבע או בזיהוי פנים</button>'):''}<button class="btn ghost" data-go="online">⚔️ קרב אונליין</button><button class="btn ghost" data-accb="out">התנתקות</button></div><p class="acc-ok">${esc(ACC.ok)}</p>`;
+    ACC.ok='';return;}
+  if(ACC.view==='signup')el.innerHTML='<h3>✨ משתמש חדש</h3>'+accForm('<label>השם במשחק<input name="name" maxlength="20" required></label>'+fEmail+'<label>סיסמה (לפחות 8 תווים)<input name="pw" type="password" minlength="8" autocomplete="new-password" required></label><label>קוד המשפחה (מנדב)<input name="code" autocomplete="off" required></label>','הרשמה','signup','<p>כבר רשומים? <button type="button" class="linkb" data-accv="login">כניסה</button></p>');
+  else if(ACC.view==='forgot')el.innerHTML='<h3>🔑 שכחתי סיסמה</h3><p class="lead">נשלח למייל קישור לבחירת סיסמה חדשה.</p>'+accForm(fEmail,'שליחת קישור','forgot','<p><button type="button" class="linkb" data-accv="login">חזרה לכניסה</button></p>');
+  else el.innerHTML='<h3>👤 כניסה</h3>'+accForm(fEmail+'<label>סיסמה<input name="pw" type="password" autocomplete="current-password" required></label>','כניסה','login','<p><button type="button" class="linkb" data-accv="forgot">שכחתי סיסמה</button> · <button type="button" class="linkb" data-accv="signup">משתמש חדש</button></p>');
+  ACC.err='';ACC.ok='';}
+const AUTH_ERR=m=>/Invalid login/i.test(m)?'מייל או סיסמה לא נכונים':/already registered/i.test(m)?'המייל הזה כבר רשום. נסו להיכנס או לאפס סיסמה.':/Email not confirmed/i.test(m)?'צריך לאשר את המייל: לחצו על הקישור שנשלח אליכם.':/rate limit|too many/i.test(m)?'יותר מדי ניסיונות. נסו שוב בעוד כמה דקות.':/Password should/i.test(m)?'הסיסמה קצרה או פשוטה מדי.':m;
+document.addEventListener('submit',async e=>{const f=e.target.closest('[data-acc]');if(!f)return;e.preventDefault();await sbInit();if(!sb)return;
+  const v=Object.fromEntries(new FormData(f).entries()),act=f.dataset.acc,btn=f.querySelector('[type=submit]');btn.disabled=true;let r;
+  try{
+    if(act==='login'){r=await sb.auth.signInWithPassword({email:v.email.trim(),password:v.pw});if(r.error)throw r.error;await sbLoadProf();ACC.view='login';}
+    if(act==='signup'){try{localStorage.setItem('ff-pend',JSON.stringify({name:v.name.trim().slice(0,20),code:v.code.trim()}));}catch(_){}
+      r=await sb.auth.signUp({email:v.email.trim(),password:v.pw,options:{emailRedirectTo:location.origin+location.pathname}});if(r.error)throw r.error;
+      if(r.data.session){await sbLoadProf();}else{ACC.view='login';ACC.ok='נשלח אליכם מייל. לחצו על הקישור שבו ואז היכנסו.';}}
+    if(act==='forgot'){r=await sb.auth.resetPasswordForEmail(v.email.trim(),{redirectTo:location.origin+location.pathname});if(r.error)throw r.error;ACC.ok='אם המייל רשום, נשלח אליו קישור. בדקו גם בספאם.';}
+    if(act==='newpw'){if(v.pw!==v.pw2)throw new Error('הסיסמאות לא זהות');r=await sb.auth.updateUser({password:v.pw});if(r.error)throw r.error;ACC.view='login';ACC.ok='הסיסמה עודכנה.';history.replaceState(null,'',location.pathname);}
+    if(act==='join'){r=await sb.rpc('ff_join',{p_name:v.name.trim().slice(0,20),p_code:v.code.trim()});if(r.error)throw new Error('קוד המשפחה לא נכון');await sbLoadProf();}
+  }catch(err){ACC.err=AUTH_ERR(err.message||String(err));}
+  renderAccount();});
+document.addEventListener('click',async e=>{const v=e.target.closest('[data-accv]');if(v){ACC.view=v.dataset.accv;ACC.err='';renderAccount();return;}
+  const b=e.target.closest('[data-accb]');if(!b)return;const t=b.dataset.accb;
+  if(t==='out'){await sb.auth.signOut();try{localStorage.removeItem(BIO_KEY);}catch(_){}sbUser=null;sbProf=null;ACC.view='login';}
+  if(t==='bioOn'){try{ACC.ok=(await bioEnable())?'מעכשיו המשחק ייפתח בטביעת אצבע או בזיהוי פנים.':'';}catch(err){ACC.ok='';ACC.err='המכשיר לא אישר. אפשר לנסות שוב.';}}
+  if(t==='bioOff'){try{localStorage.removeItem(BIO_KEY);}catch(_){}ACC.ok='בוטל.';}
+  renderAccount();});
+// biometric lock on start: the saved session is only used after the fingerprint / face check passes
+async function lockCheck(){const b=bioGet();if(!SB_ON||!b||!BIO_OK)return;await sbInit();if(!sbUser||sbUser.id!==b.uid)return;
+  $('#lockName').textContent=sbProf?sbProf.name:'';$('#lock').hidden=false;}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-lock]');if(!b)return;
+  if(b.dataset.lock==='bio'){try{if(await bioCheck()){$('#lock').hidden=true;return;}}catch(err){}$('#lockErr').textContent='לא אושר. אפשר לנסות שוב או להיכנס עם סיסמה.';}
+  else{await sb.auth.signOut();sbUser=null;sbProf=null;$('#lock').hidden=true;ACC.view='login';show('account');}});
+
+/* ---------- online 1 v 1: room code, both phones run the fight, the host's phone is the referee ---------- */
+const NET={live:null,ch:null,role:null,code:'',peer:null,me:null,status:'',lastRx:0,mySel:null};
+const NETTEST=/[?&]nettest/.test(location.search);
+const ROOM_ABC='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const roomCode=()=>Array.from(crypto.getRandomValues(new Uint8Array(5)),b=>ROOM_ABC[b%ROOM_ABC.length]).join('');
+function netSend(m){if(NET.ch)try{NET.ch.send(JSON.parse(JSON.stringify(m)));}catch(e){}}
+// transport: the server's realtime channel (private, family members only); a local test transport for development
+async function netOpen(code){netClose();NET.code=code;
+  if(NETTEST){const bc=new BroadcastChannel('ff-room-'+code);bc.onmessage=e=>netRx(e.data);NET.ch={send:m=>bc.postMessage(m),close:()=>bc.close()};return true;}
+  await sbInit();if(!sb||!sbProf)return false;
+  await sb.realtime.setAuth();
+  const ch=sb.channel('ff:'+code,{config:{private:true,broadcast:{self:false,ack:false}}});
+  ch.on('broadcast',{event:'m'},({payload})=>netRx(payload));
+  const ok=await new Promise(r=>{ch.subscribe(st=>{if(st==='SUBSCRIBED')r(true);else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT')r(false);});setTimeout(()=>r(false),8000);});
+  if(!ok){try{sb.removeChannel(ch);}catch(e){}return false;}
+  NET.ch={send:m=>ch.send({type:'broadcast',event:'m',payload:m}),close:()=>sb.removeChannel(ch)};return true;}
+function netClose(why){if(NET.ch){netSend({e:'bye'});try{NET.ch.close();}catch(e){}}NET.ch=null;NET.live=null;NET.peer=null;NET.role=null;clearInterval(NET.hb);if(why)NET.status=why;
+  if(NET.mySel!=null){sel[0]=NET.mySel;NET.mySel=null;}}
+function meCard(){const R=roster(),c=R[sel[0]];return{id:c.id,name:(sbProf&&sbProf.name)||profGet().name||c.name};}
+function netHello(){netSend({e:'hello',role:NET.role,me:meCard()});}
+function netRx(m){if(!m||!m.e)return;NET.lastRx=performance.now();const g=game&&game.net?game:null;
+  switch(m.e){
+    case 'hello':if(m.role===NET.role)return;const was=!!NET.peer;NET.peer=m.me;if(!was)netHello();if($('#online').classList.contains('on'))renderOnline();break;
+    case 'start':if(NET.role!=='guest')return;{const R=roster(),hi=R.findIndex(c=>c.id===m.h),gi=R.findIndex(c=>c.id===m.g);if(hi<0||gi<0)return;
+      if(NET.mySel==null)NET.mySel=sel[0];sel[0]=hi;sel[1]=gi;NET.live={host:false,rh:{},rx:0};mode='online';$('#ov').hidden=true;startMatch();}break;
+    case 'in':if(!g)return;g.net.rh=m.h||g.net.rh;if(m.t){const f=g.p[1-meI()];for(const a of m.t)f.buf[a]=8;}break;
+    case 'hit':if(!g||g.net.host)return;{const att=g.p[m.a],def=g.p[1-m.a];NET_APPLY=true;try{applyHit(att,def,m.d,m.px,m.py,m.o||{});}finally{NET_APPLY=false;}}break;
+    case 'timeup':if(g&&!g.net.host&&g.phase==='fight')timeUp();break;
+    case 'snap':if(g&&!g.net.host)netSnap(m);break;
+    case 'bye':NET.peer=null;if(game&&game.net){game.net.gone=true;netGone();}else if($('#online').classList.contains('on'))renderOnline();break;
+  }}
+// every frame: send my held buttons when they change and every new tap at once
+function netLocal(f,h){const n=game.net,bits=['left','right','up','down','block'].map(k=>h[k]?1:0).join(''),pb=n.pb||(n.pb={}),taps=['attack','kick','special','dash','djump'].filter(a=>(f.buf[a]||0)>(pb[a]||0));for(const a of['attack','kick','special','dash','djump'])pb[a]=f.buf[a]||0;
+  if(bits!==n.lastBits||taps.length||frameN-(n.lastSent||0)>20){n.lastBits=bits;n.lastSent=frameN;netSend({e:'in',h:{left:!!h.left,right:!!h.right,up:!!h.up,down:!!h.down,block:!!h.block},t:taps.length?taps:undefined});}}
+function netTick(){const g=game,n=g.net;if(!n||n.gone)return;
+  if(frameN-(n.lastPing||0)>45||frameN<(n.lastPing||0)){n.lastPing=frameN;netSend({e:'ping'});}
+  if(n.host&&frameN%6===0)netSend({e:'snap',ph:g.phase,pt:g.phaseT,t:g.timer,r:g.round,p:g.p.map(f=>({x:Math.round(f.x*10)/10,y:Math.round(f.y*10)/10,vx:f.vx,vy:f.vy,hp:f.hp,m:Math.round(f.meter),w:f.wins,s:f.state,fc:f.facing}))});
+  if(performance.now()-NET.lastRx>6000&&!n.gone){n.gone=true;netGone();}}
+function netSnap(m){const g=game,mi=meI();if(m.r>g.round&&g.phase!=='fatal'){g.round=m.r;g.p.forEach((f,i)=>f.wins=m.p[i].w);startRound();}
+  g.timer=m.t;
+  m.p.forEach((s,i)=>{const f=g.p[i];f.hp=s.hp;f.meter=s.m;f.wins=s.w;
+    const dx=s.x-f.x,dy=s.y-f.y,mine=i===mi;
+    if(Math.abs(dx)>(mine?70:4))f.x+=dx*(mine?.5:.35);if(Math.abs(dy)>60)f.y=s.y;
+    if(['ko','faint','down'].includes(s.s)&&f.state!==s.s&&g.phase!=='fatal'){f.state=s.s;f.atk=null;}});
+  if(g.phase!==m.ph&&['intro','fight'].includes(m.ph)&&['intro','fight','vs'].includes(g.phase)){g.phase=m.ph;g.phaseT=m.pt;}}
+function netGone(){if(!game||game.phase==='over'){if(game&&game.phase==='over'){const q=$('#ov .actions');if(q)q.innerHTML='<p class="quote">היריב יצא מהחדר</p><button class="btn primary" data-ov="netLeave">חזרה</button>';}return;}const ov=$('#ov');running=false;ov.innerHTML=`<div class="panel"><h2>החיבור נותק</h2><p class="quote">היריב יצא מהקרב או שהאינטרנט נפל.</p><div class="actions"><button class="btn primary" data-ov="netLeave">חזרה</button></div></div>`;ov.hidden=false;}
+async function renderOnline(){const el=$('#onBody'),R=roster(),me=R[sel[0]];
+  if(!NETTEST){if(!SB_ON){el.innerHTML='<h3>⚔️ קרב אונליין</h3><p class="lead">הקרב בין שני טלפונים יופעל ברגע שהשרת של המשחק יחובר.</p>';return;}
+    el.innerHTML='<p class="lead">טוען…</p>';await sbInit();
+    if(!sbProf){el.innerHTML='<h3>⚔️ קרב אונליין</h3><p class="lead">כדי לשחק אונליין צריך להיכנס לחשבון. ככה רק בני המשפחה יכולים להצטרף לחדרים.</p><div class="actions" style="justify-content:flex-start"><button class="btn primary" data-go="account">כניסה לחשבון</button></div>';return;}}
+  const myAv=avatarT(me,'big'),peerC=NET.peer&&R.find(c=>c.id===NET.peer.id);
+  if(!NET.role){el.innerHTML=`<h3>⚔️ קרב אונליין</h3><div class="onvs">${myAv}<div><b>${esc(me.name)}</b><br><button class="linkb" data-go="select">החלפת לוחם</button></div></div>${NET.status?`<p class="acc-err">${esc(NET.status)}</p>`:''}
+    <div class="actions" style="justify-content:flex-start;flex-wrap:wrap"><button class="btn primary" data-net="host">פתיחת חדר</button></div>
+    <form class="accf" data-netjoin style="margin-top:12px"><label>יש לכם קוד חדר?<input name="code" maxlength="5" autocomplete="off" style="text-transform:uppercase;letter-spacing:4px;font-weight:900" required></label><div class="row"><button class="btn" type="submit">הצטרפות</button></div></form>`;NET.status='';return;}
+  const vs=`<div class="onvs">${myAv}<span class="x">VS</span>${peerC?avatarT(peerC,'big'):'<span class="av big" style="--c:#999">?</span>'}</div><p class="lead" style="text-align:center">${esc(meCard().name)} נגד ${NET.peer?esc(NET.peer.name):'…'}</p>`;
+  if(NET.role==='host')el.innerHTML=`<h3>החדר שלכם</h3><p class="lead">שלחו את הקוד ליריב. הוא בוחר "אונליין" ואז "הצטרפות".</p><div class="roomcode">${NET.code}</div>${vs}
+    <div class="actions" style="justify-content:flex-start;flex-wrap:wrap"><button class="btn primary" data-net="start"${NET.peer?'':' disabled'}>${NET.peer?'לקרב!':'ממתינים ליריב…'}</button>${navigator.share?'<button class="btn" data-net="share">שליחת הקוד</button>':''}<button class="btn ghost" data-net="leave">סגירת החדר</button></div>`;
+  else el.innerHTML=`<h3>חדר ${NET.code}</h3>${vs}<p class="lead">${NET.peer?'ממתינים שהמארח יתחיל את הקרב…':'מתחברים לחדר…'}</p><div class="actions" style="justify-content:flex-start"><button class="btn ghost" data-net="leave">יציאה</button></div>`;}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-net]');if(!b)return;const t=b.dataset.net;
+  if(t==='host'){b.disabled=true;const code=roomCode();if(!(await netOpen(code))){NET.status='לא הצלחנו לפתוח חדר. בדקו את האינטרנט ונסו שוב.';renderOnline();return;}NET.role='host';NET.lastRx=performance.now();NET.hb=setInterval(()=>{if(!NET.peer)netHello();else netSend({e:'ping'});},1500);netHello();renderOnline();}
+  if(t==='leave'){netClose();renderOnline();}
+  if(t==='share'){try{await navigator.share({text:`בואו לקרב משפחתי! קוד החדר: ${NET.code}`,url:location.origin+location.pathname});}catch(_){}}
+  if(t==='start'&&NET.peer){const R=roster(),gi=R.findIndex(c=>c.id===NET.peer.id);if(gi<0)return;NET.mySel=sel[0];sel[1]=gi;NET.live={host:true,rh:{},rx:0};mode='online';netSend({e:'start',h:R[sel[0]].id,g:NET.peer.id});startMatch();}});
+document.addEventListener('submit',async e=>{const f=e.target.closest('[data-netjoin]');if(!f)return;e.preventDefault();const code=new FormData(f).get('code').trim().toUpperCase();if(code.length!==5)return;
+  if(!(await netOpen(code))){NET.status='לא הצלחנו להתחבר לחדר. בדקו את הקוד והאינטרנט.';renderOnline();return;}NET.role='guest';NET.lastRx=performance.now();NET.hb=setInterval(()=>{if(!NET.peer)netHello();else netSend({e:'ping'});},1500);netHello();renderOnline();});
+if(SB_ON)sbInit().then(lockCheck);
 renderTitle();
 {const b=document.getElementById('boot');if(b){b.style.transition='opacity .35s';b.style.opacity=0;setTimeout(()=>b.remove(),400);}}
 })();
