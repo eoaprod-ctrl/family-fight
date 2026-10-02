@@ -815,7 +815,7 @@ const headK=sc=>1+(1-sc)*1.3;
 
 // pacing: attack frames are stretched and damage softened so a round lasts about a minute
 const PACE=1.3,DMG_K=.65;
-const TT=window.__T||{};const HANG=TT.hg??1,HANG_A=TT.ha??.6,GUARD_A=TT.ga??2.3,SOCK=TT.sk??1,SOCK_X=TT.sx??.1,SOCK_Y=TT.sy??1.5,SOCK_W=TT.sw??.24,CAP_LEN=TT.cl??.45,CAP_S=TT.cs??1.04,CAP_UP=TT.cu??.04,CAP_TILT=TT.ct??0,ARM_UNDER=TT.au??0,TUCK=TT.tk??1,TUCK_A=TT.ta??-.08,NECK_SHOW=TT.ns??.1,G_LEAD=TT.gl??.3,G_REAR_X=TT.gx??.12,G_REAR_Y=TT.gy??.05,REAR_ELBOW=TT.re??-1,LEAD_ELBOW=-1,CAP_R=TT.cap??0,WIN_SPREAD=TT.wx??16;
+const TT=window.__T||{};const HANG=TT.hg??1,HANG_A=TT.ha??.6,GUARD_A=TT.ga??2.3,SOCK=TT.sk??1,SOCK_X=TT.sx??.16,SOCK_Y=TT.sy??1.5,SOCK_W=TT.sw??.24,SOCK_MINW=TT.mw??1,CAP_LEN=TT.cl??.45,CAP_S=TT.cs??1.04,CAP_UP=TT.cu??.04,CAP_TILT=TT.ct??0,ARM_UNDER=TT.au??0,TUCK=TT.tk??1,TUCK_A=TT.ta??-.08,NECK_SHOW=TT.ns??.1,G_LEAD=TT.gl??.3,G_REAR_X=TT.gx??.12,G_REAR_Y=TT.gy??.05,REAR_ELBOW=TT.re??-1,LEAD_ELBOW=-1,CAP_R=TT.cap??0,WIN_SPREAD=TT.wx??16;
 function makeFighter(c){
   const mv={};for(const k of['punch','kick','low','air']){mv[k]={...BASE[k],...(c.mv[k]||{})};for(const q of['s','a','r'])mv[k][q]=Math.round(mv[k][q]*PACE);}
   mv.special={s:10,a:1,r:10,dmg:0,kb:0,stun:0,m:0,y1:-190,y2:0,reach:80,...c.mv.special};
@@ -2590,7 +2590,7 @@ function socketFit(R){
   const a1=D.uarm[0],a2=D.uarm[1];let ut=0;for(;ut<U.H;ut++){let n=0;for(let i=0;i<U.W;i++)if(A(U,i,ut))n++;if(n>U.W*.25)break;}
   let w0=U.W,w1=0;const jr=Math.round(a1[1]);for(let i=0;i<U.W;i++)if(A(U,i,jr)){w0=Math.min(w0,i);w1=Math.max(w1,i);}const wu=Math.max(8,w1-w0);
   const t1=D.torso[0],t2=D.torso[1],st=(D.torsoTop-D.hem)/(Math.hypot(t2[0]-t1[0],t2[1]-t1[1])||1),su=D.armU/(Math.hypot(a2[0]-a1[0],a2[1]-a1[1])||1);
-  const want=T.W*SOCK_W*st*(D.tw||1),uwN=clamp(want/(wu*su),.7,1.7);
+  const want=T.W*SOCK_W*st*(D.tw||1),uwN=Math.max((D.uw||1)*SOCK_MINW,clamp(want/(wu*su),.7,1.7));
   D.jNear=[x0+T.W*SOCK_X,ys+(a1[1]-ut)*su/st*SOCK_Y];D.uwN=uwN;
 }
 function capOf(R,img,A){const k=img===R.n.uarm?'n':img===R.d.uarm?'d':'w';R.cap=R.cap||{};if(R.cap[k])return R.cap[k];
@@ -2673,7 +2673,7 @@ function drawSpriteBody(f,P,mode,R){
     ctx.save();ctx.translate(fH.x,fH.y);ctx.rotate(ang-Math.PI/2);ctx.scale(sc,sc);ctx.drawImage(im,-im.width/2,-D.panel.back/sc);ctx.restore();}
   // when the near arm is raised, the sleeve lifts away from the torso's armhole; real fabric would still cover it, so the sleeve's
   // top stays hanging on the shoulder (fading in with how high the elbow goes) and the lifted arm is drawn over it
-  {const el=clamp((-(eB.y-nearS.y)/D.armU+.35)/.6,0,1);if(el>0){const dl=Math.hypot(tP.x-tQ.x,tP.y-tQ.y)||1;ctx.save();ctx.globalAlpha*=el;drawCap(R,V.uarm,D.uarm,nearS,{x:(tP.x-tQ.x)/dl+CAP_TILT,y:(tP.y-tQ.y)/dl},D.armU,D.uwN||D.uw);ctx.restore();}}
+  {const el=clamp((-(eB.y-nearS.y)/D.armU-.1)/.2,0,1);if(el>0){const dl=Math.hypot(tP.x-tQ.x,tP.y-tQ.y)||1;ctx.save();ctx.globalAlpha*=el;drawCap(R,V.uarm,D.uarm,nearS,{x:(tP.x-tQ.x)/dl+CAP_TILT,y:(tP.y-tQ.y)/dl},D.armU,D.uwN||D.uw);ctx.restore();}}
   arm(V,nearS,eB,bH,1);
   if(f.bigArm){drawSeg(V.uarm,D.uarm,farS,eF,D.uw);const im=propImg(f.c.id,'flexed_arm');if(im){const s=(D.armF*2.1)/im.height;ctx.save();ctx.translate(eF.x,eF.y);ctx.rotate(Math.atan2(fH.y-eF.y,fH.x-eF.x)-Math.PI/2);ctx.scale(s,s);ctx.drawImage(im,-im.width*.5,-im.height*.12);ctx.restore();}else drawSeg(V.farm,D.farm,eF,fH,D.fw,D.armF);}
   if(CAP_R){const r=CAP_R*D.armU;ctx.save();ctx.beginPath();ctx.arc(shF.x,shF.y,r,0,Math.PI*2);ctx.clip();drawSeg(V.torso,D.torso,tP,tQ,D.tw);ctx.restore();}
