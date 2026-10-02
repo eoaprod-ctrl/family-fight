@@ -168,8 +168,8 @@ img{max-width:100%}
 .selinfo{margin-top:14px}.selinfo summary{cursor:pointer;font-weight:800;color:var(--muted);padding:6px 0;list-style:none}.selinfo summary::before{content:"▸ ";}.selinfo[open] summary::before{content:"▾ "}
 .selinfo .dets{margin-top:10px}
 .selfoot{margin-top:14px;display:grid;gap:12px}
-.accf{display:grid;gap:10px;max-width:380px}.accf label{display:grid;gap:4px;font-weight:700}.accf input{font:inherit;font-size:17px;padding:8px 10px;border:3px solid var(--ink);border-radius:10px;background:#fff;color:var(--ink);direction:ltr;text-align:right}
-.accf .row{display:flex;gap:8px;flex-wrap:wrap}.acc-err{color:#C0182A;font-weight:700;min-height:1.2em}.acc-ok{color:#16804A;font-weight:700}
+.accf{display:grid;gap:10px;max-width:380px}.accf label{display:grid;gap:4px;font-weight:700}.accf input{font:inherit;font-size:17px;padding:8px 10px;border:3px solid var(--ink);border-radius:10px;background:#fff;color:#140A2B;caret-color:#140A2B;-webkit-text-fill-color:#140A2B;direction:ltr;text-align:right}
+.accf input::placeholder{color:#7a7090;-webkit-text-fill-color:#7a7090}.accf .row{display:flex;gap:8px;flex-wrap:wrap}.acc-err{color:#C0182A;font-weight:700;min-height:1.2em}.acc-ok{color:#16804A;font-weight:700}
 .linkb{background:none;border:0;color:var(--ink);text-decoration:underline;font:inherit;cursor:pointer;padding:0}
 .roomcode{font:900 44px Bungee,Impact,sans-serif;letter-spacing:6px;direction:ltr;text-align:center;background:#FFE08A;border:3px solid var(--ink);border-radius:14px;padding:6px 10px;margin:8px 0}
 .onvs{display:flex;align-items:center;justify-content:center;gap:16px;margin:10px 0}.onvs .x{font:900 26px Bungee,Impact,sans-serif}
@@ -974,7 +974,7 @@ function drawPops(){for(const q of pops){const k=q.t/48;if(k>=1)continue;const a
   ctx.save();ctx.globalAlpha=a;ctx.translate(q.x,q.y-k*46);ctx.scale(s,s);ctx.font='900 30px Heebo, Arial, sans-serif';ctx.textAlign='center';ctx.direction='rtl';ctx.lineJoin='round';ctx.lineWidth=7;ctx.strokeStyle=INK;ctx.strokeText(q.txt,0,0);ctx.fillStyle=q.col;ctx.fillText(q.txt,0,0);ctx.restore();}
 }
 const PACE=1.3,DMG_K=.65;
-const TT=window.__T||{};const FAR_IN=TT.fi??.3,HANG=TT.hg??1,HANG_A=TT.ha??.6,GUARD_A=TT.ga??2.3,SOCK=TT.sk??1,SOCK_X=TT.sx??.16,SOCK_Y=TT.sy??1.5,SOCK_W=TT.sw??.24,SOCK_MINW=TT.mw??1,CAP_LEN=TT.cl??.45,CAP_S=TT.cs??1.04,CAP_UP=TT.cu??.04,CAP_TILT=TT.ct??0,ARM_UNDER=TT.au??0,TUCK=TT.tk??1,TUCK_A=TT.ta??-.08,NECK_SHOW=TT.ns??.15,NECK_W=TT.nw??.4,G_LEAD=TT.gl??.3,G_REAR_X=TT.gx??.12,G_REAR_Y=TT.gy??.05,REAR_ELBOW=TT.re??-1,LEAD_ELBOW=-1,CAP_R=TT.cap??0,WIN_SPREAD=TT.wx??16;
+const TT=window.__T||{};const FAR_IN=TT.fi??.3,HANG=TT.hg??1,HANG_A=TT.ha??.6,GUARD_A=TT.ga??2.3,SOCK=TT.sk??1,SOCK_X=TT.sx??.16,SOCK_Y=TT.sy??1.5,SOCK_W=TT.sw??.24,SOCK_MINW=TT.mw??1,CAP_LEN=TT.cl??.45,CAP_S=TT.cs??1.04,CAP_UP=TT.cu??.04,CAP_TILT=TT.ct??0,ARM_UNDER=TT.au??0,TUCK=TT.tk??1,TUCK_A=TT.ta??-.08,NECK_SHOW=TT.ns??.07,NECK_W=TT.nw??.3,G_LEAD=TT.gl??.3,G_REAR_X=TT.gx??.12,G_REAR_Y=TT.gy??.05,REAR_ELBOW=TT.re??-1,LEAD_ELBOW=-1,CAP_R=TT.cap??0,WIN_SPREAD=TT.wx??16;
 function makeFighter(c){
   const mv={};for(const k of['punch','kick','low','air']){mv[k]={...BASE[k],...(c.mv[k]||{})};for(const q of['s','a','r'])mv[k][q]=Math.round(mv[k][q]*PACE);}
   mv.special={s:10,a:1,r:10,dmg:0,kb:0,stun:0,m:0,y1:-190,y2:0,reach:80,...c.mv.special};
@@ -2950,7 +2950,7 @@ function drawSpriteBody(f,P,mode,R){
     cx=prof?D.face.chinX.profile:.5,C=(R.chin&&R.chin[fk])||{x:.5,w:.3,b:1},ang=Math.atan2(v.y,v.x)+Math.PI/2+(P.ht||0),ax={x:Math.cos(ang),y:Math.sin(ang)},
     gap=h*NECK_SHOW+(D.neckGap||0),base={x:neck.x+v.x*gap,y:neck.y+v.y*gap},
     off=(C.x-cx)*w,cpt={x:base.x+ax.x*off,y:base.y+ax.y*off},
-    tw=Math.max(w*(D.neckW??NECK_W),C.w*w*.95)/2,bw=tw*1.42,nb={x:neck.x-v.x*h*.08+ax.x*off*.4,y:neck.y-v.y*h*.08+ax.y*off*.4},nt={x:cpt.x+v.x*h*.1,y:cpt.y+v.y*h*.1};
+    tw=Math.max(w*(D.neckW??NECK_W),C.w*w*.8)/2,bw=tw*1.12,nb={x:neck.x-v.x*h*.12,y:neck.y-v.y*h*.12},nt={x:cpt.x+v.x*h*.1,y:cpt.y+v.y*h*.1};
   {const nc=C.col?mixC(C.col,D.neck,.5):D.neck,mid={x:(nb.x+nt.x)/2,y:(nb.y+nt.y)/2},pin=.1,q=np();
    q.moveTo(nb.x-ax.x*bw,nb.y-ax.y*bw);q.quadraticCurveTo(mid.x-ax.x*tw*(1-pin),mid.y-ax.y*tw*(1-pin),nt.x-ax.x*tw,nt.y-ax.y*tw);q.lineTo(nt.x+ax.x*tw,nt.y+ax.y*tw);
    q.quadraticCurveTo(mid.x+ax.x*tw*(1-pin),mid.y+ax.y*tw*(1-pin),nb.x+ax.x*bw,nb.y+ax.y*bw);q.closePath();
