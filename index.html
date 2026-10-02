@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>קרב משפחתי</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Ctext y=%2252%22 font-size=%2252%22%3E%F0%9F%A5%8A%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link id="gfonts" href="https://fonts.googleapis.com/css2?family=Bungee&family=Heebo:wght@400;600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
@@ -233,9 +234,22 @@ kbd{font:700 13px/1 Heebo,Arial,sans-serif;border:2px solid var(--line);border-b
 .av.big{width:64px;height:64px}
 .rdots{display:flex;gap:6px}.rdot{width:14px;height:14px;border-radius:50%;border:2px solid var(--ink);background:transparent}.rdot.on{background:var(--c)}
 @media (max-width:560px){.det{padding:10px;font-size:13px}.det .sw2{font-size:13px}}
+
+/* night polish: phones held sideways, touch targets, readability */
+@media (max-height:520px) and (orientation:landscape){.logo{font-size:min(17vw,22vh)}.lineup{margin:10px auto 8px}.lineup .av{width:44px;height:44px}.sub{display:none}}
+@media (max-height:480px){.ov .actions{flex-direction:row;justify-content:center;flex-wrap:wrap}.ov .btn{padding:8px 16px}.ov .panel .av.big{width:48px;height:48px}.ov h2{font-size:26px;margin:6px 0 2px}.setrow{margin:2px 0 8px}}
+.rscore{direction:ltr}.rscore .side span{direction:rtl}
+#game.vs #pad,#game.demo #pad{display:none}
+.seg button{min-height:42px}.selctl .seg button{padding:8px 12px;font-size:14px}
+.touch .selctl #fightBtn{position:sticky;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:5;box-shadow:4px 4px 0 var(--ink)}
+.stskip{padding:10px 18px;font-size:17px;min-height:44px;background:rgba(10,5,24,.7);border-color:#FFF1DC}
+@media (max-height:520px) and (orientation:landscape){.tile b{font-size:12px;white-space:normal;line-height:1.05}}
+.hname{-webkit-text-stroke:2px var(--ink);paint-order:stroke fill;background:rgba(10,5,24,.55);padding:2px 10px;border-radius:8px}
+details.helpbox{margin-top:10px;border-top:2px solid var(--line);padding-top:10px}details.helpbox summary{cursor:pointer;font-weight:800;font-size:17px;padding:8px 0;color:var(--ink)}details.helpbox .help{border-top:0;margin-top:4px;padding-top:4px}
 </style>
 </head>
 <body>
+<div id="boot" style="position:fixed;inset:0;z-index:99;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#140A2B;color:#FFF1DC;font:900 34px Heebo,Arial,sans-serif;direction:rtl"><div>קרב משפחתי</div><div style="margin-top:18px;width:46px;height:46px;border:6px solid rgba(255,241,220,.25);border-top-color:#FF4F1F;border-radius:50%;animation:bootspin .8s linear infinite"></div><style>@keyframes bootspin{to{transform:rotate(360deg)}}</style></div>
 
 <section id="title" class="screen on">
   <div>
@@ -295,14 +309,14 @@ kbd{font:700 13px/1 Heebo,Arial,sans-serif;border:2px solid var(--line);border-b
     <div class="go"><button class="btn" data-go="moves">🎬 צפייה במהלכים של כל הדמויות</button></div>
   </div>
   <p class="note" id="note"></p>
-  <div class="help">
+  <details class="helpbox"><summary>איך משחקים?</summary><div class="help">
     <div><strong>בטלפון:</strong> גוררים אצבע בצד שמאל של המסך כדי לזוז, למעלה קופצים ולמטה מתכופפים. כפתור המכה בונה רצף לבד, כל דמות עם הרצף שלה, והמכה האחרונה ברצף מעיפה. כפתור המיוחד מתמלא ומהבהב כשהוא מוכן. מחזיקים את כפתור ההגנה כדי להתגונן.</div>
     <div><strong>איך נלחמים:</strong> מחזיקים כיוון אחורה כדי להתגונן. כריעה מתחמקת מאגרופים ומקרניים בגובה הראש, ובעיטה בכריעה פוגעת נמוך. מד המיוחד מתמלא רק ממכות שפוגעות, ורצף ארוך ממלא מהר יותר. אחרי 4 מכות צריך רגע לנשום, ומי שחוטף 5 מכות ברצף נופל לרצפה וקם מוגן לרגע.</div>
     <div><strong>סיום:</strong> בסיבוב שמכריע את הקרב, המפסיד נשאר עומד מעולף. לוחצים על כל כפתור כדי לבצע מהלך סיום.</div>
     <div><strong>תנועות מיוחדות:</strong> עדי עושה דאש בלחיצה כפולה על כיוון. אביב ושחף קופצים שוב באוויר. זיו עושה בעיטת צלילה כשבועטים באוויר. נדב מנחית גל שמש על הרצפה. רון מקרוב עושה הטלת ג׳ודו במקום לזרוק אסלה. מירב שחוסמת הודפת את היריב וממלאת מד. שחר מחזיק רצף של חמש מכות אבל מתעייף אחריו.</div>
     <div class="kb"><strong>שחקן 1:</strong> <kbd>A</kbd> <kbd>D</kbd> תזוזה, <kbd>W</kbd> קפיצה, <kbd>S</kbd> כריעה, <kbd>J</kbd> מכה (רצף), <kbd>K</kbd> בעיטה, <kbd>L</kbd> מיוחד, <kbd>U</kbd> הגנה</div>
     <div class="kb"><strong>שחקן 2:</strong> חצים לתזוזה, <kbd>,</kbd> מכה (רצף), <kbd>.</kbd> בעיטה, <kbd>/</kbd> מיוחד, <kbd>M</kbd> הגנה</div>
-  </div>
+  </div></details>
 </section>
 
 <section id="moves" class="screen">
@@ -328,7 +342,7 @@ kbd{font:700 13px/1 Heebo,Arial,sans-serif;border:2px solid var(--line);border-b
   <div class="gbtns"><button id="pauseBtn" aria-label="השהיה">II</button></div>
   <div id="story" hidden><div class="stbg"></div><div class="stin"><div class="stphs"><div class="stph p1"><img id="stPh1" alt=""></div><div class="stph p2"><img id="stPh2" alt=""></div></div><div class="stmid"><em>הסיפור של</em><b id="stName"></b><small id="stTag"></small></div><div class="sthero"><img id="stHero" alt=""></div></div><div class="stcap"><span id="stCap"></span></div><div class="stbar" id="stBar"></div><button type="button" class="stskip" data-story="skip">דילוג ⏭</button></div>
   <div id="ov" class="ov" hidden></div>
-  <div id="rotate"><div><div class="rot-ico">📱</div><p>סובבו את הטלפון לרוחב כדי לשחק</p></div></div>
+  <div id="rotate"><div><div class="rot-ico">📱</div><p>סובבו את הטלפון לרוחב כדי לשחק</p><button type="button" class="btn primary" data-go="select" style="margin-top:18px;font-size:18px">חזרה לבחירת לוחמים</button></div></div>
 </section>
 
 <script>
@@ -768,7 +782,7 @@ function prewarm(withPair){clearTimeout(warmT);warmT=setTimeout(()=>{const R=ros
   Promise.all([...R.map(getImg),...rigsFor(pair).map(loadRig)]).then(()=>{if(running||$('#game').classList.contains('on'))return;
     prepareStage(R,resDPR(viewScale()));const t=document.createElement('canvas').getContext('2d');t.drawImage(bgCv,0,0,1,1);t.drawImage(floorCv,0,0,1,1);}).catch(()=>{});},350);}
 $('#select').addEventListener('click',e=>{
-  const t=e.target.closest('.tile');if(t){sel[pickSide]=+t.dataset.i;if(pickSide===0)pickSide=1;sfx('click');renderSelect();return;}
+  const t=e.target.closest('.tile');if(t){sel[pickSide]=+t.dataset.i;pickSide=pickSide?0:1;sfx('click');renderSelect();return;}
   const pk=e.target.closest('[data-pick]');if(pk){pickSide=+pk.dataset.pick;renderSelect();return;}
   const m=e.target.closest('[data-mode]');if(m){mode=m.dataset.mode;renderSelect();return;}
   const d=e.target.closest('[data-diff]');if(d){diff=d.dataset.diff;renderSelect();}
@@ -1015,7 +1029,7 @@ function refreshOptions(){$$('.setopts').forEach(el=>{el.outerHTML=optionsHTML(e
 document.addEventListener('change',e=>{
   const inp=e.target.closest('[data-music="pick"]');if(!inp||!inp.files[0])return;
   const f=inp.files[0];
-  idbReq('readwrite',st=>st.put({blob:f,name:f.name},'music')).then(()=>{setCustomTrack(f,f.name);refreshOptions();toast('המוזיקה נשמרה. היא תתנגן בקרבות במקום שירי הקרב.');if(Music.on&&MusicA.kind==='fight'){MusicA.cur=null;playTrack('fight');}});
+  idbReq('readwrite',st=>st.put({blob:f,name:f.name},'music')).then(r=>{setCustomTrack(f,f.name);refreshOptions();toast(r==null?'לא הצלחתי לשמור את המוזיקה, היא תתנגן רק עד שהדף ייסגר.':'המוזיקה נשמרה. היא תתנגן בקרבות במקום שירי הקרב.');if(Music.on&&MusicA.kind==='fight'){MusicA.cur=null;playTrack('fight');}});
 });
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-music="reset"]');if(!b)return;
@@ -1051,6 +1065,7 @@ function tryLandscape(){
 }
 let starting=false;
 async function startMatch(){
+  $('#game').classList.remove('demo');
   if(starting)return;starting=true;tryLandscape();
   const R=roster();
   const pairM=[R[sel[0]],R[sel[1]]];
@@ -1157,6 +1172,7 @@ function renderMoves(){
 }
 document.addEventListener('click',e=>{const b=e.target.closest('[data-demo]');if(!b)return;const on=$('.screen.on');startDemo(b.dataset.id,b.dataset.demo,on?on.id:'select');});
 async function startDemo(id,kind,from){
+  $('#game').classList.add('demo');
   const R=roster(),ai=R.findIndex(c=>c.id===id);if(ai<0||starting)return;starting=true;
   let di=(ai+1)%R.length;if(R[di].id===FIN_HELP[id])di=(di+1)%R.length;const pair=[R[ai],R[di]];
   tryLandscape();
@@ -1199,7 +1215,7 @@ function togglePause(v){
   if(!game||game.phase==='over'||game.phase==='break')return;
   paused=v??!paused;const ov=$('#ov');
   duckMusic(paused?.07:.3);
-  if(paused){ov.innerHTML=`<div class="panel"><h2>הפסקה</h2><p class="quote">סיבוב ${game.round}</p><div class="setrow">${optionsHTML()}</div><div class="actions"><button class="btn primary" data-ov="resume">המשך</button><button class="btn" data-ov="select">יציאה לבחירת לוחמים</button></div></div>`;ov.hidden=false;keys.clear();touchHeld.clear();}
+  if(paused){ov.innerHTML=`<div class="panel"><h2>הפסקה</h2><p class="quote">סיבוב ${game.round}</p><div class="setrow">${optionsHTML('seg')}</div><div class="actions"><button class="btn primary" data-ov="resume">המשך</button><button class="btn" data-ov="select">יציאה לבחירת לוחמים</button></div></div>`;ov.hidden=false;keys.clear();touchHeld.clear();}
   else{ov.hidden=true;if(Music.on&&MusicA.cur&&MusicA.cur.paused&&!document.hidden)MusicA.cur.play().catch(()=>{});}
 }
 $('#pauseBtn').addEventListener('click',()=>togglePause());
@@ -1355,7 +1371,13 @@ function stepFighter(f,o){
   if(f.dizzy>0){f.dizzy--;f.state='dizzy';f.x+=f.vx;f.vx*=.8;physics(f);if(!f.dizzy){f.state='idle';f.dizzyImm=90;}return;}
   if(f.stun>0){f.stun--;f.x+=f.vx;f.vx*=.82;physics(f);if(f.stun===0)f.state=f.y<GROUND?'jump':'idle';return;}
   // finish them: any action button (hit, kick, special, block, jump, crouch) starts the finisher from any distance
-  if(game.phase==='finish'&&f===game.finAtt&&game.finT<=292&&(f.buf.special||f.buf.attack||f.buf.kick||h.block||h.up||h.down)){f.buf={};startFatal(f);return;}
+  // a press is remembered (so a quick press during the KO slow-motion is not lost) and the finisher starts once both are on the ground
+  if(game.phase==='finish'&&f===game.finAtt){
+    if(f.buf.special||f.buf.attack||f.buf.kick||h.block||h.up||h.down)game.finQ=true;
+    if(game.finQ){f.buf={};
+      if(game.finT<=292&&f.y>=GROUND&&game.finDef.y>=GROUND){game.finQ=false;startFatal(f);return;}
+      if(!f.atk&&!f.dashT){physics(f);f.x+=f.vx;if(f.y>=GROUND){f.vx*=.7;f.state='idle';}else f.state='jump';return;}}
+  }
   if(f.dashT>0){f.dashT--;f.x+=f.vx;f.vx*=.93;if(!f.dashT){f.state='idle';f.vx=0;}return;}
   if(f.atk){
     const a=f.atk,d=f.mv[a.type],k=a.type==='special'?d.kind:null;
@@ -1460,6 +1482,7 @@ function checkHits(a,b){
   applyHit(a,b,dd2,b.x-a.facing*18*b.sc,(Math.max(top,Hb.t)+Math.min(bot,Hb.b))/2,{fixed:!!d.kind});
 }
 function applyHit(att,def,d,px,py,o={}){
+  if(game.phase!=='fight')return;
   if(def.inv>0||def.state==='down')return;
   const dir=Math.sign(def.x-att.x)||att.facing;
   if(def.grab)releaseGrab(def);
@@ -1478,7 +1501,7 @@ function applyHit(att,def,d,px,py,o={}){
     impact(px,py,20,'#FFC62E');burst(px,py,CREAM,6,4);sfx('block');hitstop=5;shakeAmt=Math.max(shakeAmt,4);
   }else{
     def.hp-=dmgFull;def.atk=null;def.dashT=0;
-    if(d.dizzy&&def.dizzyImm<=0){def.dizzy=d.dizzy;def.stun=0;def.state='dizzy';def.vx=dir*1.5;}
+    if(d.dizzy&&def.dizzyImm<=0&&!(def.dizzy>0)){def.dizzy=d.dizzy;def.stun=0;def.state='dizzy';def.vx=dir*1.5;}
     else{def.stun=Math.round(d.stun*(def.c.tough||1));def.state='hit';def.vx=dir*d.kb;if(def.y<GROUND)def.vy=-6;if(d.launch){def.vy=-d.launch;def.y-=1;}}
     att.combo=att.comboT>0?att.combo+1:1;att.comboT=(d.stun||20)+14;
     att.meter+=d.m*Math.min(2,1+.25*(att.combo-1));
@@ -1535,8 +1558,9 @@ function spStep(s){if(!s)return;if(s.g){s.vy=(s.vy||0)+s.g;}if(s.vx)s.x+=s.vx;if
 function enterFinish(def,att){
   const g=game;
   if(def.grab)releaseGrab(def);if(att.grab)releaseGrab(att);
+  att.atk=null;att.bigArm=false;att.handProp=null;att.screwBox=null;if(['atk','dash','dashb'].includes(att.state)){att.state=att.y<GROUND?'jump':'idle';att.dashT=0;}
   Object.assign(def,{state:'faint',atk:null,stun:0,dizzy:0,dashT:0,vx:dirOf(att,def)*3,inv:0});
-  g.phase='finish';g.finT=300;g.finAtt=att;g.finDef=def;
+  g.phase='finish';g.finT=300;g.finAtt=att;g.finDef=def;g.finQ=false;
   proj=[];drones=[];summons=[];bots.forEach(b=>{if(b.state==='go')b.state='leave';});
   slowmo=24;hitstop=10;flashT=6;shakeAmt=Math.max(shakeAmt,10);kickLamp(.05);
   sfx('ko',0,def);vibe([40,30,80]);duckMusic(.14);
@@ -1550,12 +1574,15 @@ function aiFinish(f,o){
 }
 function startFatal(f){
   const g=game,o=g.finDef;
-  g.phase='fatal';g.fatT=0;g.fat={att:f,def:o,sc:FINISH[f.c.id],charge:0,boom:0,boomText:'',sp:{},spB:{},pup:[]};
+  // finishers need room on the attacker's side of the victim (run-ups, props flying in): slide the victim off the wall first
+  const sdir=dirOf(f,o),room=sdir>0?o.x-36:W-36-o.x,slide=room<260?clamp(o.x+sdir*(260-room),36,W-36):null;
+  g.phase='fatal';g.fatT=0;g.fat={slide,att:f,def:o,sc:FINISH[f.c.id],charge:0,boom:0,boomText:'',sp:{},spB:{},pup:[]};
   f.buf={};f.atk=null;f.state='idle';f.vx=0;f.grab=null;duckMusic(.1);
 }
 function stepFatal(){
   const g=game,F=g.fat,a=F.att,d=F.def;g.fatT++;
   const dir=F.dirLock||(F.dirLock=dirOf(a,d));if(!(F.att.c.id==='omer'&&game.fatT>10&&game.fatT<=104))a.facing=F.away?-dir:dir;if(d.state!=='ko')d.facing=-dir;
+  if(F.slide!=null&&g.fatT<=16){d.x+=(F.slide-d.x)*.28;if(g.fatT===16)d.x=F.slide;}
   F.sc.step(a,d,g.fatT,F,dir);
   stepPuppets(F);
   if(d.state==='ko'){physics(d);d.x+=d.vx;if(d.y>=GROUND)d.vx*=.85;d.koRot+=(-Math.PI/2-d.koRot)*.12;}
@@ -2072,7 +2099,7 @@ const SPAWN={
   ball(f,o){const x=f.x+f.facing*36*f.sc,y=f.y-150*f.sc;sproj(f,propImg(f.c.id,'ball_flying'),x,y,f.facing*6.5,-6,{dmg:9,kb:6,stun:18,r:30,w:84,g:.42,bounce:3,spin:.18});sfx('whoosh',0,f);},
   toilet(f,o){
     const dist=Math.abs(o.x-f.x);
-    if(dist<95*f.sc+30&&o.y>=GROUND-20&&!['ko','grabbed','down','faint'].includes(o.state)&&o.inv<=0){startGrab(f,o);f.grab.judo=true;return;}
+    if(game.phase==='fight'&&dist<95*f.sc+30&&o.y>=GROUND-20&&!['ko','grabbed','down','faint'].includes(o.state)&&o.inv<=0){startGrab(f,o);f.grab.judo=true;return;}
     const x=f.x+f.facing*30*f.sc,y=f.y-170*f.sc;sproj(f,propImg(f.c.id,'toilet_spin'),x,y,f.facing*5.5,-6,{dmg:14,kb:9,stun:24,r:32,w:92,g:.32,spin:.12,hitFx:'splash'});sfx('whoosh',0,f);}
 };
 function sushiBurst(x,y,f){const img=propImg(f.c.id,'wasabi_puff');for(let i=0;i<5;i++)parts.push({k:'img',img,x:x+(Math.random()-.5)*20,y:y+(Math.random()-.5)*20,vx:(Math.random()-.5)*3,vy:-1-Math.random()*1.5,w:26+Math.random()*16,grow:1.5,life:24+Math.random()*10,max:34,rot:Math.random()*6,vr:(Math.random()-.5)*.2});burst(x,y,'#7BC043',10,5);sfx('poof');}
@@ -2978,6 +3005,7 @@ function drawPortrait(c,x,y,w,h,mirror){
 }
 function drawHUD(){
   const g=game;
+  {const gr=ctx.createLinearGradient(0,0,0,118);gr.addColorStop(0,'rgba(10,5,24,.62)');gr.addColorStop(1,'rgba(10,5,24,0)');ctx.fillStyle=gr;ctx.fillRect(-M,0,W+2*M,118);}
   g.p.forEach((f,i)=>{
     const L=i===0,bw=316,bh=26,by=18,sk=L?10:-10,bx=L?100:W-100-bw;
     drawPortrait(f.c,L?16:W-16-72,10,72,86,!L);
@@ -3055,7 +3083,7 @@ function drawVS(){
 function drawCenter(){
   const g=game;
   if(g.phase==='vs')return drawVS();
-  if(g.phase==='finish'){const k=ease((300-g.finT)/14),s=1.6-.6*k,p=1+Math.sin(frameN*.25)*.04;ctx.save();ctx.translate(W/2,H*.3);ctx.scale(s*p,s*p);ctx.globalAlpha=Math.min(1,k*1.5);bigText('סיימו את זה!',0,0,70,false,'#FFFFFF','#FF4F1F');ctx.restore();if(g.mode!=='demo'){ctx.save();ctx.globalAlpha=.9;ctx.font='800 22px Heebo, Arial, sans-serif';ctx.textAlign='center';ctx.direction='rtl';ctx.lineJoin='round';ctx.lineWidth=6;ctx.strokeStyle=INK;const tip='לוחצים על כל כפתור';ctx.strokeText(tip,W/2,H*.3+56);ctx.fillStyle=CREAM;ctx.fillText(tip,W/2,H*.3+56);ctx.restore();}return;}
+  if(g.phase==='finish'){const k=ease((300-g.finT)/14),s=1.6-.6*k,p=1+Math.sin(frameN*.25)*.04;ctx.save();ctx.translate(W/2,H*.3);ctx.scale(s*p,s*p);ctx.globalAlpha=Math.min(1,k*1.5);bigText('סיימו את זה!',0,0,70,false,'#FFFFFF','#FF4F1F');ctx.restore();if(g.mode!=='demo'&&!(g.mode==='cpu'&&g.finAtt===g.p[1])){ctx.save();ctx.globalAlpha=.9;ctx.font='800 22px Heebo, Arial, sans-serif';ctx.textAlign='center';ctx.direction='rtl';ctx.lineJoin='round';ctx.lineWidth=6;ctx.strokeStyle=INK;const tip='לוחצים על כל כפתור';ctx.strokeText(tip,W/2,H*.3+56);ctx.fillStyle=CREAM;ctx.fillText(tip,W/2,H*.3+56);ctx.restore();}return;}
   if(g.phase==='fatal'){const F=g.fat;if(F&&F.boom>0){const k=ease((60-F.boom)/8),s=2.4-1.4*k;ctx.save();ctx.translate(W/2+(Math.random()-.5)*6,H*.32);ctx.scale(s,s);ctx.rotate(-.08);ctx.globalAlpha=Math.min(1,F.boom/12);bigText(F.boomText,0,0,120,false,'#FFFFFF','#FFB020');ctx.restore();}return;}
   if(g.phase==='intro'){
     const t=120-g.phaseT;
@@ -3082,6 +3110,7 @@ function drawSpecialTags(){
   });
 }
 function render(){
+  if(game){const v=game.phase==='vs';if(v!==render._v){render._v=v;$('#game').classList.toggle('vs',v);}}
   if(!game)return;
   ctx.setTransform(DPR,0,0,DPR,0,0);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
   ctx.fillStyle='#0A0518';ctx.fillRect(0,0,W,H);
@@ -3123,6 +3152,7 @@ addEventListener('resize',fit);
 addEventListener('orientationchange',()=>setTimeout(fit,200));
 
 renderTitle();
+{const b=document.getElementById('boot');if(b){b.style.transition='opacity .35s';b.style.opacity=0;setTimeout(()=>b.remove(),400);}}
 })();
 
 </script>
