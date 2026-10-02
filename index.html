@@ -996,8 +996,16 @@ function makeFighter(c){
 const SET_KEY='familyFighter.settings';
 let settings=(()=>{const d={sound:true,music:true,vibe:true,pfx:true,musicVol:'mid'};try{return Object.assign(d,JSON.parse(localStorage.getItem(SET_KEY))||{});}catch(e){return d;}})();
 function saveSettings(){try{localStorage.setItem(SET_KEY,JSON.stringify(settings));}catch(e){}}
-const CAN_VIBE=TOUCH&&typeof navigator.vibrate==='function';
-function vibe(p){if(!settings.vibe||!CAN_VIBE)return;try{navigator.vibrate(p);}catch(e){}}
+const VIBE_API=TOUCH&&typeof navigator.vibrate==='function';
+// iPhone Safari has no vibration API; since iOS 18 flipping a native switch control gives a haptic tick, so a hidden one is flipped instead
+const IOS_HAP=TOUCH&&!VIBE_API&&/iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);let iosSw=null;
+function iosTick(){try{if(!iosSw){const l=document.createElement('label'),i=document.createElement('input');i.type='checkbox';i.setAttribute('switch','');l.appendChild(i);
+  l.style.cssText='position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none';l.setAttribute('aria-hidden','true');i.tabIndex=-1;document.body.appendChild(l);iosSw=l;}iosSw.click();}catch(e){}}
+const CAN_VIBE=VIBE_API||IOS_HAP;
+// short pulses (under ~35ms) are too weak to feel on many Android motors, so every pulse is stretched
+function vibe(p){if(!settings.vibe||!CAN_VIBE)return;const a=Array.isArray(p)?p:[p];
+  if(VIBE_API){try{navigator.vibrate(a.map((v,k)=>k%2?v:Math.max(40,Math.round(v*1.6))));}catch(e){}return;}
+  let t=0;for(let k=0;k<a.length;k+=2){if(t===0)iosTick();else setTimeout(iosTick,t);t+=(a[k]||0)+(a[k+1]||0)+1;}}
 let AC=null,sfxBus=null,musBus=null,noiseBuf=null;
 function audio(){
   if(!AC){
@@ -1481,6 +1489,8 @@ $$('#pad .tb').forEach(b=>{
   const act=b.dataset.act;
   const on=e=>{e.preventDefault();try{b.setPointerCapture(e.pointerId);}catch(_){}b.classList.add('down');touchHeld.add(act);tapTouch.add(act);if(game&&!paused&&game.mode!=='demo'&&['attack','kick','special'].includes(act))game.p[meI()].buf[act]=8;};
   const off=()=>{b.classList.remove('down');touchHeld.delete(act);};
+  // iPhone: a haptic tick is only allowed inside a touch, so the strike buttons tick when released
+  if(IOS_HAP&&['attack','kick','special'].includes(act))b.addEventListener('pointerup',()=>{if(settings.vibe&&game&&!paused&&game.mode!=='demo')iosTick();});
   b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('lostpointercapture',off);
   b.addEventListener('contextmenu',e=>e.preventDefault());
 });
