@@ -815,7 +815,7 @@ const headK=sc=>1+(1-sc)*1.3;
 
 // pacing: attack frames are stretched and damage softened so a round lasts about a minute
 const PACE=1.3,DMG_K=.65;
-const TT=window.__T||{};const NECK_SHOW=TT.ns??.1,G_LEAD=TT.gl??.55,G_REAR_X=TT.gx??.25,G_REAR_Y=TT.gy??.1,REAR_ELBOW=TT.re??-1,LEAD_ELBOW=-1,CAP_R=TT.cap??.5,WIN_SPREAD=TT.wx??16;
+const TT=window.__T||{};const NECK_SHOW=TT.ns??.1,G_LEAD=TT.gl??.3,G_REAR_X=TT.gx??.12,G_REAR_Y=TT.gy??.05,REAR_ELBOW=TT.re??-1,LEAD_ELBOW=-1,CAP_R=TT.cap??.5,WIN_SPREAD=TT.wx??16;
 function makeFighter(c){
   const mv={};for(const k of['punch','kick','low','air']){mv[k]={...BASE[k],...(c.mv[k]||{})};for(const q of['s','a','r'])mv[k][q]=Math.round(mv[k][q]*PACE);}
   mv.special={s:10,a:1,r:10,dmg:0,kb:0,stun:0,m:0,y1:-190,y2:0,reach:80,...c.mv.special};
@@ -2242,7 +2242,7 @@ function pose(f){
   if(st==='dashb'){sh.x-=8;head.x-=10;}
   if(st==='chomp'){head.x+=22;head.y+=6;sh.x+=14;fH={x:58,y:-152};bH={x:52,y:-120};}
   if(st==='judo'){hip.y+=8;hip.x-=4;sh.x+=10;head.x+=8;fH={x:46,y:-172};bH={x:38,y:-150};fF={x:34,y:0};bF={x:-26,y:0};pa=.16;}
-  if(st==='win'){const b=Math.abs(Math.sin(t*.12)),wx=WIN_SPREAD;hip.y-=b*3;sh.y-=b*4;head.y-=b*4;fH={x:26+wx,y:-204+Math.sin(t*.2)*6-b*4};bH={x:-18-wx,y:-198-b*3};}
+  if(st==='win'){const b=Math.abs(Math.sin(t*.12)),wx=WIN_SPREAD;hip.y-=b*3;sh.y-=b*4;head.y-=b*4;fH={x:-18-wx,y:-204+Math.sin(t*.2)*6-b*4};bH={x:26+wx,y:-198-b*3};}
   if(f.sq>.05&&f.y>=GROUND-1&&!f.atk){hip.y+=f.sq*10;sh.y+=f.sq*12;head.y+=f.sq*12;}
   if(f.atk){
     const a=f.atk,d=f.mv[a.type],A=atkPhase(a,d);
@@ -2577,13 +2577,18 @@ function drawSpriteBody(f,P,mode,R){
   const ul=Math.hypot(P.sh.x-P.hip.x,P.sh.y-P.hip.y)||1,u={x:(P.sh.x-P.hip.x)/ul,y:(P.sh.y-P.hip.y)/ul},at=(o,k)=>({x:o.x+u.x*k,y:o.y+u.y*k});
   const pc=Math.cos(P.pa||0),ps=Math.sin(P.pa||0),pu={x:u.x*pc-u.y*ps,y:u.x*ps+u.y*pc},atp=(o,k)=>({x:o.x+pu.x*k,y:o.y+pu.y*k});
   const tP=at(hip,D.hem),tQ=at(hip,D.torsoTop),hP=atp(hip,D.hipUp),hQ=atp(hip,-D.hipDown);
-  const jLead=D.jShF[0]>=D.jShB[0]?D.jShF:D.jShB,jRear=jLead===D.jShF?D.jShB:D.jShF;const shF=segMap(D.torso,tP,tQ,D.tw,jLead),shB=segMap(D.torso,tP,tQ,D.tw,jRear),neck=segMap(D.torso,tP,tQ,D.tw,D.jNeck);
+  // 3/4 view facing right: the shoulder nearer the camera is the one on the LEFT of the torso image; its arm is drawn in front of the body,
+  // the far shoulder (right side of the image, toward the opponent) carries the arm drawn behind the body
+  const jLead=D.jShF[0]<=D.jShB[0]?D.jShF:D.jShB,jRear=jLead===D.jShF?D.jShB:D.jShF;const shF=segMap(D.torso,tP,tQ,D.tw,jLead),shB=segMap(D.torso,tP,tQ,D.tw,jRear),neck=segMap(D.torso,tP,tQ,D.tw,D.jNeck);
   const hipF=segMap(D.hips,hP,hQ,D.hw,D.jHipF),hipB=segMap(D.hips,hP,hQ,D.hw,D.jHipB);
   const rel=(pt,j)=>({x:j.x+(pt.x-P.sh.x)*ra,y:j.y+(pt.y-P.sh.y)*ra});
   // a limb may stretch a little past its length on a full extension, never more
   const reachC=(j,p,len)=>{const dx=p.x-j.x,dy=p.y-j.y,d=Math.hypot(dx,dy),m=len*1.1;return d>m?{x:j.x+dx/d*m,y:j.y+dy/d*m}:p;};
-  const L=D.armU+D.armF,ext=pt=>clamp((Math.hypot(pt.x-P.sh.x,pt.y-P.sh.y)-38)/24,0,1),fR=rel(P.fH,shF),gF=1-ext(P.fH),fH=reachC(shF,{x:Math.max(fR.x,shF.x+L*G_LEAD*gF),y:fR.y},L),bR=rel(P.bH,shB),gB=1-ext(P.bH),bH=reachC(shB,{x:bR.x+(Math.max(bR.x,shF.x+L*G_REAR_X)-bR.x)*gB,y:bR.y+(Math.min(bR.y,shF.y-L*G_REAR_Y)-bR.y)*gB},L);
-  const aF=reachC(hipF,{x:P.fF.x,y:P.fF.y-D.ankle},D.legT+D.legS),aB=reachC(hipB,{x:P.bF.x,y:P.bF.y-D.ankle},D.legT+D.legS);
+  // joint limits from clinical range-of-motion tables: elbow flexes at most ~140 deg, knee ~150 deg (never folds flatter than that)
+  const romC=(j,p,l1,l2,maxFlex)=>{const a=Math.PI-maxFlex*Math.PI/180,dm=Math.sqrt(l1*l1+l2*l2-2*l1*l2*Math.cos(a)),dx=p.x-j.x,dy=p.y-j.y,d=Math.hypot(dx,dy)||1;return d<dm?{x:j.x+dx/d*dm,y:j.y+dy/d*dm}:p;};
+  // hand targets are authored around the middle of the shoulders; the near arm crosses the chest to reach them, the far arm stays behind the body
+  const L=D.armU+D.armF,ext=pt=>clamp((Math.hypot(pt.x-P.sh.x,pt.y-P.sh.y)-38)/24,0,1),shC={x:(shF.x+shB.x)/2,y:(shF.y+shB.y)/2},shX=Math.max(shF.x,shB.x),shY=Math.min(shF.y,shB.y),fR=rel(P.fH,shC),gF=1-ext(P.fH),fH=romC(shF,reachC(shF,{x:Math.max(fR.x,shX+L*G_LEAD*gF),y:fR.y},L),D.armU,D.armF,140),bR=rel(P.bH,shC),gB=1-ext(P.bH),bH=romC(shB,reachC(shB,{x:bR.x+(Math.max(bR.x,shX+L*G_REAR_X)-bR.x)*gB,y:bR.y+(Math.min(bR.y,shY-L*G_REAR_Y)-bR.y)*gB},L),D.armU,D.armF,140);
+  const aF=romC(hipF,reachC(hipF,{x:P.fF.x,y:P.fF.y-D.ankle},D.legT+D.legS),D.legT,D.legS,150),aB=romC(hipB,reachC(hipB,{x:P.bF.x,y:P.bF.y-D.ankle},D.legT+D.legS),D.legT,D.legS,150);
   const kF=ik2(hipF,aF,D.legT,D.legS,1),kB=ik2(hipB,aB,D.legT,D.legS,1);
   const eF=ik2(shF,fH,D.armU,D.armF,LEAD_ELBOW),eB=ik2(shB,bH,D.armU,D.armF,REAR_ELBOW);
   const leg=(S,hj,k,a)=>{
