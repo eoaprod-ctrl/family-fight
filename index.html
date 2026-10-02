@@ -654,7 +654,7 @@ function loadRig(id){
       if(!RIG_PARTS.has(k)){R.n[k]=im;return;}   // props: decoded once, no tinted copies
       const base=k.startsWith('f_')?featherCv(im,Math.round(im.naturalHeight*.02)+2):im;if(k.startsWith('f_'))R.chin[k]=chinOf(im);
       R.n[k]=base;R.d[k]=tintCv(base,'#140A2B',.38);R.w[k]=tintCv(base,'#FFFFFF',.6);});}))
-    .then(()=>{R.ok=true;return true;}).catch(()=>false);
+    .then(()=>{try{socketFit(R);}catch(e){}R.ok=true;return true;}).catch(()=>false);
   return R.ready;
 }
 const rigOf=f=>{const R=RIG[f.c.id];return R&&R.ok&&!saved.photos[f.c.id]?R:null;};
@@ -815,7 +815,7 @@ const headK=sc=>1+(1-sc)*1.3;
 
 // pacing: attack frames are stretched and damage softened so a round lasts about a minute
 const PACE=1.3,DMG_K=.65;
-const TT=window.__T||{};const NECK_SHOW=TT.ns??.1,G_LEAD=TT.gl??.3,G_REAR_X=TT.gx??.12,G_REAR_Y=TT.gy??.05,REAR_ELBOW=TT.re??-1,LEAD_ELBOW=-1,CAP_R=TT.cap??.5,WIN_SPREAD=TT.wx??16;
+const TT=window.__T||{};const SOCK=TT.sk??1,SOCK_X=TT.sx??.1,SOCK_Y=TT.sy??1,SOCK_W=TT.sw??.24,CAP_LEN=TT.cl??0,CAP_S=TT.cs??1.18,CAP_UP=TT.cu??.22,CAP_TILT=TT.ct??-.08,ARM_UNDER=TT.au??0,TUCK=TT.tk??1,TUCK_A=TT.ta??-.08,NECK_SHOW=TT.ns??.1,G_LEAD=TT.gl??.3,G_REAR_X=TT.gx??.12,G_REAR_Y=TT.gy??.05,REAR_ELBOW=TT.re??-1,LEAD_ELBOW=-1,CAP_R=TT.cap??.5,WIN_SPREAD=TT.wx??16;
 function makeFighter(c){
   const mv={};for(const k of['punch','kick','low','air']){mv[k]={...BASE[k],...(c.mv[k]||{})};for(const q of['s','a','r'])mv[k][q]=Math.round(mv[k][q]*PACE);}
   mv.special={s:10,a:1,r:10,dmg:0,kb:0,stun:0,m:0,y1:-190,y2:0,reach:80,...c.mv.special};
@@ -2192,6 +2192,7 @@ function smoothPose(f){
   if(a&&a.type!=='special'){const strike=a.type==='punch'?'fH':'fF';spec[strike]=[.72,.42];if(a.type!=='punch')spec.bF=[.5,.5];}
   if(st==='walk'||st==='walkb'){spec.fF=spec.bF=[.55,.45];}
   for(const k of PKEYS){const[s,dmp]=spec[k],v=P.v[k],p=P[k],t=T[k];v.x=(v.x+(t.x-p.x)*s)*dmp;v.y=(v.y+(t.y-p.y)*s)*dmp;p.x+=v.x;p.y+=v.y;}
+  P.guard=T.guard;P.tuck=T.tuck;
   P.v.ht=(P.v.ht+(T.ht-P.ht)*.16)*.7;P.ht+=P.v.ht;
   P.v.pa=(P.v.pa+(T.pa-(P.pa||0))*.22)*.62;P.pa=(P.pa||0)+P.v.pa;
   let tt=0;
@@ -2213,8 +2214,9 @@ function extCurve(A){if(A.ph===0)return A.u<.6?-.32*ease(A.u/.6):-.32+1.32*eIn((
 const MOC={"jab":[[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],[0.4,0.1,-0.6,-0.1,-0.0,0.1,1.7,-0.3,-0.2,0.4,0.9,-1.8,-0.5,0.1],[1.5,-0.1,-1.4,-0.1,-0.0,0.1,5.2,-0.5,-0.4,0.7,1.8,-4.0,-1.6,-0.0],[3.1,-0.7,-2.5,-0.1,-0.0,0.2,9.8,-0.8,-0.7,1.2,2.8,-5.2,-3.0,-0.4],[5.1,-1.6,-3.8,-0.1,-0.0,0.2,15.7,-0.8,-1.3,1.7,4.5,-5.6,-4.3,-0.8],[7.1,-2.1,-5.1,-0.1,0.1,0.3,23.6,0.1,-1.9,2.1,7.1,-4.9,-6.0,-1.4],[9.0,-1.9,-5.8,-0.2,0.2,0.5,32.3,1.1,-2.7,2.3,10.0,-3.8,-7.2,-1.9],[11.1,-0.8,-6.1,-0.3,0.2,0.6,36.2,0.3,-4.0,2.4,12.4,-2.3,-8.4,-2.3],[13.4,1.1,-7.2,-0.3,0.3,0.7,36.5,-0.5,-5.2,2.9,12.7,-1.1,-9.9,-2.3],[15.4,3.6,-7.7,-0.2,0.2,0.7,36.2,-3.4,-6.7,2.8,10.9,0.4,-11.8,-1.7],[16.4,4.9,-7.7,0.0,0.1,0.5,35.8,-4.2,-6.9,3.1,9.1,1.4,-12.8,-0.8],[15.8,4.6,-7.2,0.2,0.2,0.2,32.9,-4.8,-5.1,3.2,9.7,1.0,-12.3,-0.6],[13.8,3.2,-6.1,0.2,0.5,0.1,28.8,-3.3,-3.1,3.5,11.9,-0.2,-10.1,-1.1],[11.1,1.4,-4.8,0.1,0.8,0.2,24.8,-0.6,-1.4,3.8,13.8,-1.5,-7.5,-1.6],[8.8,-0.2,-4.0,-0.0,0.8,0.1,21.2,1.3,-0.5,3.7,14.9,-2.8,-5.2,-1.8],[6.9,-1.1,-3.1,-0.0,0.8,0.1,18.1,2.1,-0.3,3.1,14.4,-3.6,-3.3,-1.8],[5.2,-1.6,-2.3,-0.0,0.8,0.1,15.4,2.4,-0.1,2.5,12.5,-3.6,-2.1,-1.8],[4.0,-1.4,-1.7,0.1,0.8,0.0,12.7,2.6,-0.1,1.9,9.3,-3.4,-1.5,-1.6],[3.1,-0.4,-1.2,0.2,0.8,0.0,10.2,2.2,-0.1,1.2,5.4,-3.0,-1.8,-1.1],[2.6,1.2,-1.0,0.3,0.7,-0.1,7.9,1.8,0.2,0.7,1.5,-2.2,-2.2,-0.6],[2.3,2.9,-0.9,0.3,0.6,-0.1,5.6,1.2,0.4,0.1,-0.6,-0.3,-2.1,-0.1],[1.9,4.4,-0.9,0.3,0.5,-0.2,3.8,0.7,0.6,-0.2,-1.6,1.2,-2.1,0.5],[1.5,5.0,-0.8,0.3,0.4,-0.2,2.4,0.3,0.8,-0.6,-2.4,2.2,-2.1,0.9],[1.1,4.3,-0.8,0.3,0.3,-0.1,1.4,0.1,0.5,-0.8,-2.1,2.1,-1.6,1.0],[0.5,2.8,-0.6,0.2,0.3,-0.1,0.7,0.0,0.2,-0.5,-1.0,1.5,-0.8,0.6],[0.2,1.3,-0.3,0.1,0.2,0.0,0.4,0.0,0.1,-0.1,0.1,0.7,-0.3,0.2],[0.0,-0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0]],"kick":[[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],[0.2,0.2,0.7,-0.0,-0.1,0.1,2.7,-2.1,0.9,4.1,-0.4,0.0,0.9,-0.0],[0.7,0.4,1.6,-0.0,-0.2,0.2,5.2,-4.3,-2.2,8.0,-1.1,0.0,2.9,-0.1],[2.0,0.5,2.6,0.0,-0.5,0.3,7.2,-6.0,-9.7,10.7,-2.5,0.0,5.4,-0.4],[4.1,0.3,3.1,0.1,-0.9,0.4,8.8,-6.5,-20.8,12.0,-4.7,0.0,6.3,-0.7],[7.4,-0.2,2.8,0.1,-1.5,0.5,10.0,-6.2,-33.6,11.9,-7.5,-1.0,4.5,-0.4],[11.3,-0.7,1.9,0.3,-2.0,0.6,11.7,-4.9,-45.5,10.7,-10.4,-3.3,-0.1,0.0],[15.2,-1.6,0.1,0.7,-2.2,0.6,13.9,-3.1,-54.6,9.1,-11.5,-6.8,-4.2,0.0],[18.8,-2.4,-2.7,1.1,-2.2,0.8,16.6,-0.6,-60.6,8.6,-10.5,-11.4,-8.3,0.0],[21.8,-2.9,-6.1,1.6,-2.2,0.8,19.6,2.9,-63.2,9.0,-8.5,-19.1,-11.6,0.0],[24.1,-3.7,-9.7,2.3,-2.2,0.9,23.3,6.4,-62.2,10.0,-4.0,-28.9,-14.3,0.0],[25.6,-4.5,-13.2,3.0,-2.1,0.8,27.0,8.8,-58.0,11.6,3.2,-38.9,-16.1,0.0],[26.6,-5.4,-16.1,3.8,-2.1,0.6,28.8,9.1,-50.7,12.2,13.0,-48.1,-17.3,0.0],[27.0,-6.5,-18.8,4.7,-2.2,0.5,28.0,7.9,-41.8,11.2,25.9,-56.3,-18.1,0.0],[26.4,-7.0,-20.9,5.5,-2.2,0.5,25.3,5.4,-32.4,7.9,43.4,-64.4,-17.9,0.0],[24.3,-6.8,-22.1,6.0,-2.2,0.4,22.6,3.4,-23.4,2.4,65.5,-72.9,-16.1,-0.0],[21.0,-5.9,-22.4,6.0,-2.3,0.4,19.8,2.6,-15.6,-4.1,88.8,-81.6,-13.1,-0.0],[18.3,-4.8,-22.3,5.5,-2.5,0.6,17.3,2.4,-9.5,-10.9,100.8,-88.9,-10.7,0.0],[17.3,-4.1,-21.9,5.1,-2.9,0.6,15.2,2.0,-5.3,-17.1,102.6,-92.5,-10.0,0.0],[17.6,-3.8,-21.9,4.7,-3.1,0.8,12.4,1.6,-3.3,-21.9,99.0,-89.2,-10.7,0.0],[19.5,-4.4,-21.8,4.6,-3.2,0.9,9.7,2.5,-2.7,-24.7,91.3,-81.1,-12.9,0.0],[21.9,-5.7,-20.9,4.1,-3.4,0.9,9.3,5.9,-3.1,-26.1,77.8,-70.3,-15.7,0.0],[24.9,-7.0,-20.1,3.6,-3.5,0.8,8.5,10.5,-4.6,-26.5,59.9,-58.3,-19.3,0.0],[28.2,-8.3,-19.6,3.3,-3.5,0.7,7.6,15.6,-6.8,-25.6,40.6,-47.0,-23.0,-0.1],[30.7,-9.4,-18.5,2.9,-3.3,0.6,6.8,20.2,-9.7,-23.3,22.7,-36.8,-25.8,-0.2],[32.4,-9.8,-16.4,2.2,-3.0,0.5,6.2,24.0,-14.1,-19.2,7.5,-28.6,-27.1,-0.3],[32.9,-10.0,-13.9,1.6,-2.6,0.3,5.4,26.9,-20.9,-13.8,-4.2,-22.6,-26.4,-0.4],[32.5,-10.2,-11.8,1.3,-2.1,0.1,4.7,28.5,-29.1,-7.7,-12.3,-18.3,-23.8,-0.8],[30.8,-10.0,-10.0,1.2,-1.8,-0.1,2.1,29.0,-35.8,-2.0,-17.2,-15.3,-18.7,-1.5],[28.2,-9.6,-8.5,1.0,-1.7,-0.0,-4.0,28.2,-39.2,2.9,-19.6,-12.7,-13.5,-2.6],[25.2,-9.1,-7.4,0.7,-1.4,0.1,-12.9,27.3,-36.7,5.1,-20.0,-10.1,-9.4,-3.5],[21.9,-8.4,-6.6,0.4,-1.1,0.1,-23.9,27.3,-28.5,4.9,-18.9,-7.2,-7.2,-4.2],[18.1,-7.2,-5.4,0.4,-0.7,0.1,-35.7,28.3,-15.7,3.5,-15.8,-4.0,-6.9,-4.3],[13.9,-5.9,-3.1,0.4,-0.5,0.0,-45.7,29.5,-1.3,1.1,-10.8,-1.9,-7.1,-3.6],[10.2,-4.2,-1.3,0.5,-0.2,0.0,-51.2,30.4,11.2,-0.1,-7.1,-1.0,-6.5,-2.5],[6.7,-2.6,0.0,0.4,-0.0,-0.0,-50.6,30.5,20.1,-0.6,-4.0,-0.3,-4.2,-1.9],[4.2,-1.7,0.7,0.3,0.2,-0.0,-44.2,29.4,24.3,-0.4,-2.6,-0.1,-2.4,-1.5],[2.7,-1.1,0.9,0.3,0.3,-0.1,-33.6,26.7,24.3,0.1,-1.2,-0.1,-2.0,-0.8],[1.7,-0.8,0.7,0.3,0.3,-0.2,-21.6,21.8,21.3,1.0,-0.4,-0.1,-1.2,-0.3],[0.9,-0.5,0.2,0.2,0.2,-0.2,-11.6,15.5,16.5,1.3,0.1,-0.1,-0.4,-0.1],[0.5,-0.1,0.0,0.0,-0.0,-0.0,-5.5,9.4,10.9,1.1,0.2,-0.1,0.1,0.0],[0.2,0.0,-0.1,0.0,-0.0,-0.0,-1.8,4.3,5.2,0.7,0.1,0.0,0.1,0.0],[0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]]};
 const MOCAP=(window.__T&&window.__T.moc===0)?0:1;
 function mocS(T,fi){const n=T.length-1,i=Math.max(0,Math.min(n,fi)),i0=Math.floor(i),i1=Math.min(n,i0+1),t=i-i0,a=T[i0],b=T[i1];return a.map((v,k)=>v+(b[k]-v)*t);}
+const WIN_KIND={geva:'flex',ron:'flex',yaniv:'flex',nevo:'pump',shahar:'pump',alon:'pump',aviv:'pump',omer:'pump',ziv:'pump',adi:'pump'};
 function pose(f){
-  const t=f.anim,st=f.state,crouch=isCrouch(f),idle=st==='idle';
+  let P_ht=null;const t=f.anim,st=f.state,crouch=isCrouch(f),idle=st==='idle';
   const br=Math.sin(t*.085),sway=Math.sin(t*.043);
   // fighting stance: knees soft, weight slightly back, guard up, breathing in the chest
   let hip={x:-2+sway*1.5,y:-75+Math.max(0,br)*.8},sh={x:5+sway*.8,y:-126+br*1.8},head={x:9+sway*.6,y:-160+br*1.4};
@@ -2235,14 +2237,31 @@ function pose(f){
     fH={x:34-up*6,y:-126-up*26+fall*8};bH={x:14,y:-120-up*22+fall*10};sh.x+=apex*4;head.x+=apex*5;pa=-apex*.1;
   }
   if(st==='block'){hip={x:-4,y:-72};sh={x:2,y:-122};head={x:-2,y:-152};fH={x:34,y:-136};bH={x:30,y:-122};pa=-.04;}
-  if(st==='hit'||st==='down'){const k=clamp((f.stun||8)/12,0,1);head={x:-12-6*k,y:-150};sh={x:-9-4*k,y:-124};hip.x=-5;fH={x:10,y:-98};bH={x:-24,y:-112-6*k};bF.x-=4;pa=-.14;}
+  // getting hit: a sharp whip-back on impact (head snaps, chest caves, arms fly open, knees give), then the guard comes back
+  if(st==='hit'){
+    if(f._lastSt!=='hit'||(f.stun||0)>(f._lastStun||0)){f._hitA=t;f._stun0=Math.max(6,f.stun||10);}
+    const el=t-(f._hitA??t),u=clamp(el/Math.max(6,f._stun0),0,1),sn=u<.18?ease(u/.18):1-eIO((u-.18)/.82),side=(f.c.id.length%2?1:-1);
+    head={x:9-34*sn,y:-160+10*sn};sh={x:5-24*sn,y:-126+8*sn};hip={x:-2+6*sn,y:-75+6*sn};pa=-.24*sn;P_ht=-.4*sn;
+    fH={x:36-78*sn,y:-116-46*sn+side*6*sn};bH={x:22-66*sn,y:-110-30*sn};bF={x:-22-10*sn,y:0};fF={x:24-2*sn,y:-6*sn};
+  }
+  // falling: recoil, legs swing up as the body tips back, land, then lie with bent knees and loose arms (down = gets back up)
+  if(st==='ko'||st==='down'){
+    const q=clamp(-(f.koRot||0)/(Math.PI/2),0,1),air=f.y<GROUND-2,flop=q>.85&&!air;
+    if(!flop){const sn=1-q*.6;head={x:9-20*sn,y:-160+10*q};sh={x:5-12*sn,y:-126+8*q};hip={x:-2,y:-74+8*q};pa=-.25*sn;P_ht=-.4*sn;
+      fH={x:30+12*q,y:-104-10*q};bH={x:-20-26*q,y:-170-40*q};fF={x:26+14*q,y:-14*q-(air?18:0)};bF={x:-14+16*q,y:-6*q-(air?10:0)};}
+    else{const br=Math.sin(t*.08)*.8;head={x:3,y:-160};sh={x:2,y:-126+br};hip={x:0,y:-62};pa=0;P_ht=-.15;
+      fH={x:10,y:-98};bH={x:6,y:-212};fF={x:8,y:-6};bF={x:-6,y:-2};}
+  }
   if(st==='grabbed'){const w=Math.sin(t*1.3)*6;head={x:-6+w,y:-152};fH={x:14,y:-176+w};bH={x:-12,y:-170-w};fF={x:26+w,y:-6};}
   if(st==='dizzy'||st==='faint'){const w=Math.sin(t*.15)*9;head.x+=w;sh.x+=w*.6;hip.x-=w*.3;fH={x:16,y:-86};bH={x:-6,y:-86};pa=-w*.012;}
   if(st==='dash'){sh.x+=12;head.x+=14;bF.x-=10;hip.x+=4;pa=.08;}
   if(st==='dashb'){sh.x-=8;head.x-=10;}
   if(st==='chomp'){head.x+=22;head.y+=6;sh.x+=14;fH={x:58,y:-152};bH={x:52,y:-120};}
   if(st==='judo'){hip.y+=8;hip.x-=4;sh.x+=10;head.x+=8;fH={x:46,y:-172};bH={x:38,y:-150};fF={x:34,y:0};bF={x:-26,y:0};pa=.16;}
-  if(st==='win'){const b=Math.abs(Math.sin(t*.12)),wx=WIN_SPREAD;hip.y-=b*3;sh.y-=b*4;head.y-=b*4;fH={x:-18-wx,y:-204+Math.sin(t*.2)*6-b*4};bH={x:26+wx,y:-198-b*3};}
+  if(st==='win'){const b=Math.abs(Math.sin(t*.12)),wx=WIN_SPREAD,wk=WIN_KIND[f.c.id]||'up';hip.y-=b*3;sh.y-=b*4;head.y-=b*4;
+    if(wk==='pump'){const pm=Math.max(0,Math.sin(t*.22));bH={x:30,y:-196-34*pm};fH={x:-12,y:-84};hip.y+=pm*3;head.y-=pm*3;}          // fist pump, other hand on the hip
+    else if(wk==='flex'){const fl=Math.sin(t*.1)*3;bH={x:58,y:-186-fl};fH={x:-12,y:-84};sh.y+=2;head.x+=2;}                       // one-arm biceps flex, other hand on the hip
+    else{fH={x:-18-wx,y:-204+Math.sin(t*.2)*6-b*4};bH={x:26+wx,y:-198-b*3};}}
   if(f.sq>.05&&f.y>=GROUND-1&&!f.atk){hip.y+=f.sq*10;sh.y+=f.sq*12;head.y+=f.sq*12;}
   if(f.atk){
     const a=f.atk,d=f.mv[a.type],A=atkPhase(a,d);
@@ -2309,7 +2328,9 @@ function pose(f){
   }
   let ht=idle?Math.sin(t*.09)*.03:0;
   if(st==='hit'||st==='grabbed')ht=-.22;else if(st==='dizzy'||st==='faint')ht=Math.sin(t*.15)*.2;else if(st==='win')ht=.12;else if(f.atk&&f.atk.type==='punch')ht=.06;else if(st==='chomp')ht=.1;else if(st==='block')ht=.1;
-  return{hip,sh,head,fF,bF,fH,bH,ht,pa};
+  if(P_ht!=null)ht=P_ht;f._lastSt=st;f._lastStun=f.stun||0;
+  const guard=['idle','walk','walkb','block','crouch','jump','dash','dashb','atk'].includes(st)?1:0,tuck=st==='dizzy'||st==='faint'?.8:st==='hit'?.45:st==='ko'||st==='down'?.35:0;
+  return{hip,sh,head,fF,bF,fH,bH,ht,pa,guard,tuck};
 }
 /* ================= rendering ================= */
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -2554,6 +2575,30 @@ function drawCoinBelt(hip,n){
   for(let i=0;i<7;i++){const y=-20+i*6.6,x=-10+Math.sin(frameN*.5+i)*1.5;ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fillStyle='#FFD34D';ctx.fill();ctx.lineWidth=1.2;ctx.strokeStyle='#7A5200';ctx.stroke();}
   ctx.restore();
 }
+// shoulder cap: the rounded sleeve top of the upper-arm image, cut once per rig, drawn hanging along the torso so the shirt's armhole
+// is always covered and the moving arm comes out of it like a real shoulder (a ball joint), whatever the arm does
+// shoulder socket: every torso is cut sleeveless, so the near arm's sleeve must sit exactly on the torso's near shoulder.
+// measured once from the images: where the shoulder line meets the side of the torso, and how wide that shoulder is;
+// the joint goes there and the sleeve is sized to cover it, so the arm grows out of the shoulder like in the artwork
+function alphaOf(im){const c=document.createElement('canvas');c.width=im.naturalWidth||im.width;c.height=im.naturalHeight||im.height;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(im,0,0);return{W:c.width,H:c.height,d:x.getImageData(0,0,c.width,c.height).data};}
+function socketFit(R){
+  const D=R.def,T=alphaOf(R.n.torso),U=alphaOf(R.n.uarm),A=(o,i,j)=>o.d[(j*o.W+i)*4+3]>128;
+  const lx=j=>{for(let i=0;i<T.W*.5;i++)if(A(T,i,j))return i;return null;};
+  let ys=0;for(;ys<T.H*.5;ys++){const v=lx(ys);if(v!=null&&v<T.W*.32)break;}
+  const yc=Math.round(ys+T.H*.12),x0=lx(yc)??lx(ys)??0;
+  // sleeve: its top row and its width at the joint row
+  const a1=D.uarm[0],a2=D.uarm[1];let ut=0;for(;ut<U.H;ut++){let n=0;for(let i=0;i<U.W;i++)if(A(U,i,ut))n++;if(n>U.W*.25)break;}
+  let w0=U.W,w1=0;const jr=Math.round(a1[1]);for(let i=0;i<U.W;i++)if(A(U,i,jr)){w0=Math.min(w0,i);w1=Math.max(w1,i);}const wu=Math.max(8,w1-w0);
+  const t1=D.torso[0],t2=D.torso[1],st=(D.torsoTop-D.hem)/(Math.hypot(t2[0]-t1[0],t2[1]-t1[1])||1),su=D.armU/(Math.hypot(a2[0]-a1[0],a2[1]-a1[1])||1);
+  const want=T.W*SOCK_W*st*(D.tw||1),uwN=clamp(want/(wu*su),.7,1.7);
+  D.jNear=[x0+T.W*SOCK_X,ys+(a1[1]-ut)*su/st*SOCK_Y];D.uwN=uwN;
+}
+function capOf(R,img,A){const k=img===R.n.uarm?'n':img===R.d.uarm?'d':'w';R.cap=R.cap||{};if(R.cap[k])return R.cap[k];
+  const a1=A[0],a2=A[1],al=Math.hypot(a2[0]-a1[0],a2[1]-a1[1]),cut=Math.min(img.height,Math.round(a1[1]+al*CAP_LEN)),c=document.createElement('canvas');c.width=img.width;c.height=cut;
+  const x=c.getContext('2d');x.drawImage(img,0,0);x.globalCompositeOperation='destination-out';const fe=Math.round(al*.12),g=x.createLinearGradient(0,cut-fe,0,cut);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,1)');x.fillStyle=g;x.fillRect(0,cut-fe,c.width,fe);
+  return R.cap[k]=c;}
+function drawCap(R,img,A,sh,down,len,wm){const cap=capOf(R,img,A),a1=A[0],a2=A[1],ax=a2[0]-a1[0],ay=a2[1]-a1[1],al=Math.hypot(ax,ay)||1,s=len/al;
+  const dl=Math.hypot(down.x,down.y)||1;ctx.save();ctx.translate(sh.x-down.x/dl*len*CAP_UP,sh.y-down.y/dl*len*CAP_UP);ctx.rotate(Math.atan2(down.y,down.x)-Math.atan2(ay,ax));ctx.scale(s*wm*CAP_S,s*CAP_S);ctx.drawImage(cap,-a1[0],-a1[1]);ctx.restore();}
 function drawSeg(img,A,p,q,wm=1,nom=0){
   const a1=A[0],a2=A[1],dx=q.x-p.x,dy=q.y-p.y,L=Math.hypot(dx,dy)||1,ax=a2[0]-a1[0],ay=a2[1]-a1[1],al=Math.hypot(ax,ay)||1,s=L/al,sw=nom&&L>nom?nom/al:s;
   ctx.save();ctx.translate(p.x,p.y);ctx.rotate(Math.atan2(dy,dx)-Math.atan2(ay,ax));ctx.scale(sw*wm,s);ctx.drawImage(img,-a1[0],-a1[1]);ctx.restore();
@@ -2579,7 +2624,7 @@ function drawSpriteBody(f,P,mode,R){
   const tP=at(hip,D.hem),tQ=at(hip,D.torsoTop),hP=atp(hip,D.hipUp),hQ=atp(hip,-D.hipDown);
   // 3/4 view facing right: the shoulder nearer the camera is the one on the LEFT of the torso image; its arm is drawn in front of the body,
   // the far shoulder (right side of the image, toward the opponent) carries the arm drawn behind the body
-  const jLead=D.jShF[0]<=D.jShB[0]?D.jShF:D.jShB,jRear=jLead===D.jShF?D.jShB:D.jShF;const shF=segMap(D.torso,tP,tQ,D.tw,jLead),shB=segMap(D.torso,tP,tQ,D.tw,jRear),neck=segMap(D.torso,tP,tQ,D.tw,D.jNeck);
+  const jLead0=D.jShF[0]<=D.jShB[0]?D.jShF:D.jShB,jRear=jLead0===D.jShF?D.jShB:D.jShF,jLead=(SOCK&&D.jNear)||jLead0;const shF=segMap(D.torso,tP,tQ,D.tw,jLead),shB=segMap(D.torso,tP,tQ,D.tw,jRear),neck=segMap(D.torso,tP,tQ,D.tw,D.jNeck);
   const hipF=segMap(D.hips,hP,hQ,D.hw,D.jHipF),hipB=segMap(D.hips,hP,hQ,D.hw,D.jHipB);
   const rel=(pt,j)=>({x:j.x+(pt.x-P.sh.x)*ra,y:j.y+(pt.y-P.sh.y)*ra});
   // a limb may stretch a little past its length on a full extension, never more
@@ -2587,10 +2632,14 @@ function drawSpriteBody(f,P,mode,R){
   // joint limits from clinical range-of-motion tables: elbow flexes at most ~140 deg, knee ~150 deg (never folds flatter than that)
   const romC=(j,p,l1,l2,maxFlex)=>{const a=Math.PI-maxFlex*Math.PI/180,dm=Math.sqrt(l1*l1+l2*l2-2*l1*l2*Math.cos(a)),dx=p.x-j.x,dy=p.y-j.y,d=Math.hypot(dx,dy)||1;return d<dm?{x:j.x+dx/d*dm,y:j.y+dy/d*dm}:p;};
   // hand targets are authored around the middle of the shoulders; the near arm crosses the chest to reach them, the far arm stays behind the body
-  const L=D.armU+D.armF,ext=pt=>clamp((Math.hypot(pt.x-P.sh.x,pt.y-P.sh.y)-38)/24,0,1),shC={x:(shF.x+shB.x)/2,y:(shF.y+shB.y)/2},shX=Math.max(shF.x,shB.x),shY=Math.min(shF.y,shB.y),fR=rel(P.fH,shC),gF=1-ext(P.fH),fH=romC(shF,reachC(shF,{x:Math.max(fR.x,shX+L*G_LEAD*gF),y:fR.y},L),D.armU,D.armF,140),bR=rel(P.bH,shC),gB=1-ext(P.bH),bH=romC(shB,reachC(shB,{x:bR.x+(Math.max(bR.x,shX+L*G_REAR_X)-bR.x)*gB,y:bR.y+(Math.min(bR.y,shY-L*G_REAR_Y)-bR.y)*gB},L),D.armU,D.armF,140);
+  const L=D.armU+D.armF,ext=pt=>clamp((Math.hypot(pt.x-P.sh.x,pt.y-P.sh.y)-38)/24,0,1),shC={x:(shF.x+shB.x)/2,y:(shF.y+shB.y)/2},shX=Math.max(shF.x,shB.x),shY=Math.min(shF.y,shB.y),fR=rel(P.fH,shC),gF=(1-ext(P.fH))*(P.guard??1),fHt=romC(shF,reachC(shF,{x:Math.max(fR.x,shX+L*G_LEAD*gF),y:fR.y},L),D.armU,D.armF,140),bR=rel(P.bH,shC),gB=(1-ext(P.bH))*(P.guard??1),bH=romC(shB,reachC(shB,{x:bR.x+(Math.max(bR.x,shX+L*G_REAR_X)-bR.x)*gB,y:bR.y+(Math.min(bR.y,shY-L*G_REAR_Y)-bR.y)*gB},L),D.armU,D.armF,140);
   const aF=romC(hipF,reachC(hipF,{x:P.fF.x,y:P.fF.y-D.ankle},D.legT+D.legS),D.legT,D.legS,150),aB=romC(hipB,reachC(hipB,{x:P.bF.x,y:P.bF.y-D.ankle},D.legT+D.legS),D.legT,D.legS,150);
   const kF=ik2(hipF,aF,D.legT,D.legS,1),kB=ik2(hipB,aB,D.legT,D.legS,1);
-  const eF=ik2(shF,fH,D.armU,D.armF,LEAD_ELBOW),eB=ik2(shB,bH,D.armU,D.armF,REAR_ELBOW);
+  // near arm, anatomically: when the arm is not reaching out, the upper arm hangs from the near shoulder along the side of the body
+  // (elbow tucked under the shoulder, slightly forward) and only the forearm comes forward to the fist; a reaching arm uses plain IK
+  const eF0=ik2(shF,fHt,D.armU,D.armF,LEAD_ELBOW),tk=clamp(Math.max(gF,P.tuck||0),0,1)*TUCK,eT={x:shF.x+Math.sin(TUCK_A)*D.armU,y:shF.y+Math.cos(TUCK_A)*D.armU},
+    fdx=fHt.x-eT.x,fdy=fHt.y-eT.y,fdl=Math.hypot(fdx,fdy)||1,hT={x:eT.x+fdx/fdl*D.armF,y:eT.y+fdy/fdl*D.armF},
+    eF={x:eF0.x+(eT.x-eF0.x)*tk,y:eF0.y+(eT.y-eF0.y)*tk},fH={x:fHt.x+(hT.x-fHt.x)*tk,y:fHt.y+(hT.y-fHt.y)*tk},eB=ik2(shB,bH,D.armU,D.armF,REAR_ELBOW);
   const leg=(S,hj,k,a)=>{
     if(!D.thighOver)drawSeg(S.thigh,D.thigh,hj,k,D.tlw);
     const im=S.shoe,sc=D.shoe.w/im.width,grounded=f.y>=GROUND-1&&a.y>=-D.ankle-2,rot=grounded?0:Math.atan2(a.y-k.y,a.x-k.x)-Math.PI/2;
@@ -2598,7 +2647,7 @@ function drawSpriteBody(f,P,mode,R){
     if(D.shoeOver){drawSeg(S.shin,D.shin,k,a,D.slw,D.legS);shoe();}else{shoe();drawSeg(S.shin,D.shin,k,a,D.slw,D.legS);}
     if(D.thighOver)drawSeg(S.thigh,D.thigh,hj,k,D.tlw);
   };
-  const arm=(S,sj,e,h)=>{drawSeg(S.uarm,D.uarm,sj,e,D.uw);drawSeg(S.farm,D.farm,e,h,D.fw,D.armF);};
+  const arm=(S,sj,e,h,near)=>{drawSeg(S.uarm,D.uarm,sj,e,near&&SOCK&&D.uwN?D.uwN:D.uw);drawSeg(S.farm,D.farm,e,h,D.fw,D.armF);};
   arm(B,shB,eB,bH);leg(B,hipB,kB,aB);leg(V,hipF,kF,aF);
   drawSeg(V.hips,D.hips,hP,hQ,D.hw);
   const hv={x:P.head.x-P.sh.x,y:P.head.y-P.sh.y},vl=Math.hypot(hv.x,hv.y)||1,v={x:hv.x/vl,y:hv.y/vl},nl=D.neckLen||9,chin={x:neck.x+v.x*nl,y:neck.y+v.y*nl};
@@ -2611,14 +2660,16 @@ function drawSpriteBody(f,P,mode,R){
     tw=Math.max(w*.2,C.w*w*.82)/2,bw=tw*1.18,nb={x:neck.x-v.x*7+ax.x*off*.5,y:neck.y-v.y*7+ax.y*off*.5},nt={x:cpt.x+v.x*h*.06,y:cpt.y+v.y*h*.06};
   {const q=np();q.moveTo(nb.x-ax.x*bw,nb.y-ax.y*bw);q.lineTo(nt.x-ax.x*tw,nt.y-ax.y*tw);q.lineTo(nt.x+ax.x*tw,nt.y+ax.y*tw);q.lineTo(nb.x+ax.x*bw,nb.y+ax.y*bw);q.closePath();
    const g=ctx.createLinearGradient(nb.x,nb.y,nt.x,nt.y);g.addColorStop(0,shadeC(D.neck,-.25));g.addColorStop(.6,shadeC(D.neck,-.05));g.addColorStop(1,shadeC(D.neck,-.18));ctx.fillStyle=g;ctx.fill(q);}
+  if(!f.bigArm&&ARM_UNDER)drawSeg(V.uarm,D.uarm,shF,eF,D.uw);
   drawSeg(V.torso,D.torso,tP,tQ,D.tw);
   // the image's chin bottom (C.b) lands exactly on the top of the visible neck
   ctx.save();ctx.translate(base.x,base.y);ctx.rotate(ang);ctx.scale(1+hs*.16,1-hs*.13);ctx.drawImage(face,-w*cx,-h*C.b,w,h);ctx.restore();
   if(D.panel&&V.panel&&!f.noPanel){const im=V.panel,ang=Math.atan2(fH.y-shF.y,fH.x-shF.x),sc=D.panel.len/im.height;
     ctx.save();ctx.translate(fH.x,fH.y);ctx.rotate(ang-Math.PI/2);ctx.scale(sc,sc);ctx.drawImage(im,-im.width/2,-D.panel.back/sc);ctx.restore();}
   if(f.bigArm){drawSeg(V.uarm,D.uarm,shF,eF,D.uw);const im=propImg(f.c.id,'flexed_arm');if(im){const s=(D.armF*2.1)/im.height;ctx.save();ctx.translate(eF.x,eF.y);ctx.rotate(Math.atan2(fH.y-eF.y,fH.x-eF.x)-Math.PI/2);ctx.scale(s,s);ctx.drawImage(im,-im.width*.5,-im.height*.12);ctx.restore();}else drawSeg(V.farm,D.farm,eF,fH,D.fw,D.armF);}
-  else arm(V,shF,eF,fH);
+  else if(ARM_UNDER)drawSeg(V.farm,D.farm,eF,fH,D.fw,D.armF);else{if(CAP_LEN>0){const dl=Math.hypot(tP.x-tQ.x,tP.y-tQ.y)||1;drawCap(R,V.uarm,D.uarm,shF,{x:(tP.x-tQ.x)/dl+CAP_TILT,y:(tP.y-tQ.y)/dl},D.armU,D.uw);}arm(V,shF,eF,fH,1);}
   if(CAP_R){const r=CAP_R*D.armU;ctx.save();ctx.beginPath();ctx.arc(shF.x,shF.y,r,0,Math.PI*2);ctx.clip();drawSeg(V.torso,D.torso,tP,tQ,D.tw);ctx.restore();}
+  if(window.__DBGJ){const dot=(p,c)=>{ctx.fillStyle=c;ctx.beginPath();ctx.arc(p.x,p.y,2.2,0,7);ctx.fill();};dot(shF,'red');dot(eF,'orange');dot(fH,'yellow');dot(shB,'blue');dot(eB,'cyan');dot(bH,'lime');}
   if(f.handProp){const hp=f.handProp,im=propImg(hp.id||f.c.id,hp.img);if(im){const ang=Math.atan2(fH.y-eF.y,fH.x-eF.x);ctx.save();ctx.translate(fH.x,fH.y);ctx.rotate(ang+(hp.rot||0));drawProp(im,hp.dx||0,hp.dy||0,hp.w,0,1);ctx.restore();}}
 }
 function drawBody(f,P,mode){
