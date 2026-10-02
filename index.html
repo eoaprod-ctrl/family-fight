@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="קרב משפחתי">
+<meta name="theme-color" content="#0A0518">
+<link rel="apple-touch-icon" href="icon-180.png">
 <title>קרב משפחתי</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Ctext y=%2252%22 font-size=%2252%22%3E%F0%9F%A5%8A%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -150,6 +157,29 @@ img{max-width:100%}
 .selinfo{margin-top:14px}.selinfo summary{cursor:pointer;font-weight:800;color:var(--muted);padding:6px 0;list-style:none}.selinfo summary::before{content:"▸ ";}.selinfo[open] summary::before{content:"▾ "}
 .selinfo .dets{margin-top:10px}
 .selfoot{margin-top:14px;display:grid;gap:12px}
+.ctlw{max-width:760px;margin:0 auto;padding:0 16px 30px;display:grid;gap:16px}
+.ctlcard{background:var(--panel);border:3px solid var(--ink);border-radius:16px;padding:14px 16px;box-shadow:4px 4px 0 var(--ink);color:var(--ink)}.ctlcard h3{margin:0 0 6px;font-size:20px}
+.keytabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin:8px 0}
+.keytabs table{width:100%;border-collapse:collapse}.keytabs th{text-align:start;padding:4px 0;font-size:16px}.keytabs td{padding:3px 0}
+.kbtn{min-width:86px;font:800 15px Heebo,Arial,sans-serif;padding:5px 10px;border:2px solid var(--ink);border-bottom-width:4px;border-radius:9px;background:var(--field);color:var(--ink);direction:ltr}
+.kbtn.wait{background:#FFE08A;animation:spBlink .6s steps(2) infinite}
+#padEd{position:fixed;inset:0;z-index:40;background:radial-gradient(ellipse at 50% 40%,#3a2466,#0A0518 75%);direction:ltr;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden}
+#padEd[hidden]{display:none}
+.pe-bar{position:absolute;top:calc(6px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;direction:rtl;max-width:96vw;z-index:2;color:#FFF1DC;font:700 13px Heebo,Arial,sans-serif}
+.pe-bar button{font:800 13px Heebo,Arial,sans-serif;padding:6px 10px;border-radius:10px;border:2px solid #FFF1DC;background:rgba(20,10,43,.8);color:#FFF1DC}
+.pe-bar button[aria-pressed="true"]{background:#FF4F1F}.pe-bar .pe-save{background:#3CCB6A;color:#0A0518}.pe-sel{opacity:.8}
+.pe-op{display:flex;gap:4px;align-items:center}.pe-op input{width:90px}
+.pe-zone{position:absolute;top:0;bottom:0;width:48%;border:2px dashed rgba(255,241,220,.25);color:rgba(255,241,220,.35);display:grid;place-items:center;font:800 16px Heebo,Arial,sans-serif;pointer-events:none}
+.pe-it{position:absolute;border-radius:50%;border:2px solid rgba(255,241,220,.7);background:rgba(20,10,43,.6);color:#FFF1DC;display:grid;place-items:center;align-content:center;font:800 12px/1.1 Heebo,Arial,sans-serif;touch-action:none;cursor:grab;text-align:center}
+.pe-it i{font-style:normal;font-size:26px}.pe-it.sel{border-color:#FF4F1F;box-shadow:0 0 0 4px rgba(255,79,31,.55)}
+.pe-it.joy{border-style:dashed}
+#pad.custom .acts{inset:0;right:auto;bottom:auto;display:block;width:100%;height:100%;pointer-events:none}
+#pad.custom .acts .tb{position:absolute;pointer-events:auto;left:calc(var(--x) * 100% - var(--w) / 2);top:calc(var(--y) * 100% - var(--w) / 2);width:var(--w)!important;height:var(--w)!important;opacity:var(--a,1)}
+#pad.custom .jbase{left:calc(var(--jx) * 100vw - 60px);top:calc(var(--jy) * 100vh - 60px);bottom:auto;opacity:calc(var(--a,1) * .65)}
+#pad.custom.jright #joy{left:auto;right:0}
+.tb.kck{width:70px;height:70px}
+.instb{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;background:#FFF1DC;color:#140A2B;border:3px solid #140A2B;border-radius:14px;padding:10px 14px;box-shadow:4px 4px 0 #FF4F1F;font:700 14px/1.4 Heebo,Arial,sans-serif;direction:rtl;display:flex;gap:10px;align-items:center;max-width:92vw}
+.instb[hidden]{display:none}.instb button{font:800 13px Heebo,Arial,sans-serif;border:2px solid #140A2B;border-radius:9px;background:#fff;padding:4px 10px}
 .av.avt img{object-position:50% 25%}
 .av.huge{width:clamp(96px,24vw,150px);height:clamp(96px,24vw,150px);font-size:clamp(40px,10vw,64px)}
 .go{display:flex;justify-content:center;margin:8px 0}
@@ -327,7 +357,7 @@ details.helpbox{margin-top:10px;border-top:2px solid var(--line);padding-top:10p
   <details class="selinfo"><summary>פרטים על שני הלוחמים</summary><div class="dets" id="dets"></div></details>
   <div class="selfoot">
     <div id="setWrap2"></div>
-    <div class="go"><button class="btn" data-go="moves">🎬 צפייה במהלכים של כל הדמויות</button></div>
+    <div class="go"><button class="btn" data-go="moves">🎬 צפייה במהלכים של כל הדמויות</button> <button class="btn" data-go="controls">🎮 התאמת כפתורים</button></div>
   </div>
   <p class="note" id="note"></p>
   <details class="helpbox"><summary>איך משחקים?</summary><div class="help">
@@ -335,11 +365,44 @@ details.helpbox{margin-top:10px;border-top:2px solid var(--line);padding-top:10p
     <div><strong>איך נלחמים:</strong> מחזיקים כיוון אחורה כדי להתגונן. כריעה מתחמקת מאגרופים ומקרניים בגובה הראש, ובעיטה בכריעה פוגעת נמוך. מד המיוחד מתמלא רק ממכות שפוגעות, ורצף ארוך ממלא מהר יותר. אחרי 4 מכות צריך רגע לנשום, ומי שחוטף 5 מכות ברצף נופל לרצפה וקם מוגן לרגע.</div>
     <div><strong>סיום:</strong> בסיבוב שמכריע את הקרב, המפסיד נשאר עומד מעולף. לוחצים על כל כפתור כדי לבצע מהלך סיום.</div>
     <div><strong>תנועות מיוחדות:</strong> עדי עושה דאש בלחיצה כפולה על כיוון. אביב ושחף קופצים שוב באוויר. זיו עושה בעיטת צלילה כשבועטים באוויר. נדב מנחית גל שמש על הרצפה. רון מקרוב עושה הטלת ג׳ודו במקום לזרוק אסלה. מירב שחוסמת הודפת את היריב וממלאת מד. שחר מחזיק רצף של חמש מכות אבל מתעייף אחריו.</div>
-    <div class="kb"><strong>שחקן 1:</strong> <kbd>A</kbd> <kbd>D</kbd> תזוזה, <kbd>W</kbd> קפיצה, <kbd>S</kbd> כריעה, <kbd>J</kbd> מכה (רצף), <kbd>K</kbd> בעיטה, <kbd>L</kbd> מיוחד, <kbd>U</kbd> הגנה</div>
+    <div class="kb" id="kb1"><strong>שחקן 1:</strong> <kbd>A</kbd> <kbd>D</kbd> תזוזה, <kbd>W</kbd> קפיצה, <kbd>S</kbd> כריעה, <kbd>J</kbd> מכה (רצף), <kbd>K</kbd> בעיטה, <kbd>L</kbd> מיוחד, <kbd>U</kbd> הגנה</div>
     <div class="credit" style="font-size:12px;opacity:.8">תנועות המכה והבעיטה מבוססות על לכידת תנועה של שחקנים אמיתיים, ממאגר פתוח לשימוש לא מסחרי:<br><span dir="ltr">Bandai Namco Research Motion Dataset · CC BY-NC 4.0</span></div>
-    <div class="kb"><strong>שחקן 2:</strong> חצים לתזוזה, <kbd>,</kbd> מכה (רצף), <kbd>.</kbd> בעיטה, <kbd>/</kbd> מיוחד, <kbd>M</kbd> הגנה</div>
+    <div class="kb" id="kb2"><strong>שחקן 2:</strong> חצים לתזוזה, <kbd>,</kbd> מכה (רצף), <kbd>.</kbd> בעיטה, <kbd>/</kbd> מיוחד, <kbd>M</kbd> הגנה</div>
   </div></details>
 </section>
+
+<section id="controls" class="screen">
+  <header class="bar">
+    <button class="btn ghost" data-go="select">חזרה</button>
+    <h2>התאמת כפתורים</h2>
+    <button class="btn primary" data-go="select">לקרב</button>
+  </header>
+  <div class="ctlw">
+    <div class="ctlcard"><h3>📱 כפתורי מגע בטלפון</h3>
+      <p class="lead">גוררים כל כפתור למקום שנוח לכם, משנים גודל ושקיפות, ואפשר להוסיף כפתור בעיטה נפרד. השינוי נשמר במכשיר הזה.</p>
+      <div class="actions" style="justify-content:flex-start"><button class="btn primary" data-ctl="edit">עריכת מיקום הכפתורים</button><button class="btn ghost" data-ctl="padReset">חזרה לברירת המחדל</button></div></div>
+    <div class="ctlcard"><h3>⌨️ מקלדת</h3>
+      <p class="lead">לוחצים על פעולה ואז על המקש החדש. אם המקש כבר תפוס, שתי הפעולות מחליפות מקשים ביניהן.</p>
+      <div id="keyTabs" class="keytabs"></div>
+      <div class="actions" style="justify-content:flex-start"><button class="btn ghost" data-ctl="keysReset">חזרה למקשי ברירת המחדל</button></div></div>
+  </div>
+</section>
+
+<div id="padEd" hidden>
+  <div class="pe-bar">
+    <b>גוררים כפתור למקום החדש</b>
+    <span class="pe-sel" id="peSel"></span>
+    <button type="button" data-pe="smaller">➖ קטן</button><button type="button" data-pe="bigger">➕ גדול</button>
+    <button type="button" data-pe="kick" id="peKick">🦶 כפתור בעיטה</button>
+    <button type="button" data-pe="mirror">⇆ החלפת צדדים</button>
+    <label class="pe-op">שקיפות <input type="range" id="peOp" min="25" max="100" step="5"></label>
+    <button type="button" data-pe="reset">איפוס</button>
+    <button type="button" data-pe="cancel">ביטול</button>
+    <button type="button" data-pe="save" class="pe-save">שמירה ✓</button>
+  </div>
+  <div class="pe-zone" id="peZone"><span>אזור התנועה</span></div>
+  <div id="peItems"></div>
+</div>
 
 <section id="moves" class="screen">
   <header class="bar">
@@ -359,6 +422,7 @@ details.helpbox{margin-top:10px;border-top:2px solid var(--line);padding-top:10p
       <button class="tb sp" id="spBtn" data-act="special"><i>✨</i>מיוחד</button>
       <button class="tb atk" data-act="attack"><i>👊</i>מכה</button>
       <button class="tb blk" data-act="block"><i>🛡️</i>הגנה</button>
+      <button class="tb kck" data-act="kick" hidden><i>🦶</i>בעיטה</button>
     </div>
   </div>
   <div class="gbtns"><button id="pauseBtn" aria-label="השהיה">II</button></div>
@@ -711,12 +775,14 @@ function statBars(c){
 function show(id){
   $$('.screen').forEach(s=>s.classList.toggle('on',s.id===id));
   $('#game').classList.toggle('on',id==='game');
-  if(id!=='game'){running=false;menuMusic();$('#story').hidden=true;$('#game').classList.remove('story');if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});}
+  if(id!=='game'){running=false;menuMusic();$('#story').hidden=true;$('#game').classList.remove('story');}
   if(id==='title')renderTitle();
+  {const ib=document.getElementById('instb');if(ib)ib.hidden=id!=='title';}
   if(id==='roster')renderRoster();
   if(id==='select')renderSelect();
   if(id==='moves')renderMoves();
   if(id==='board')renderBoard();
+  if(id==='controls')renderKeys();
   window.scrollTo(0,0);
 }
 document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g)show(g.dataset.go);});
@@ -3340,6 +3406,70 @@ addEventListener('orientationchange',()=>setTimeout(fit,200));
   ['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,e=>{if(G.classList.contains('on'))e.preventDefault();},{passive:false}));
   G.addEventListener('dblclick',e=>e.preventDefault());
   document.addEventListener('touchmove',e=>{if(G.classList.contains('on')&&e.touches&&e.touches.length>1)e.preventDefault();},{passive:false});})();
+/* ---------- custom controls: touch layout editor and keyboard remapping ---------- */
+const CTRL_KEY='familyFighter.ctrl',MAP_DEF=JSON.parse(JSON.stringify(MAP));
+let CTRL=(()=>{try{return JSON.parse(localStorage.getItem(CTRL_KEY)||'null')||{};}catch(e){return{};}})();
+function saveCtrl(){try{localStorage.setItem(CTRL_KEY,JSON.stringify(CTRL));}catch(e){}}
+const ACT_NAMES={left:'שמאלה',right:'ימינה',up:'קפיצה',down:'כריעה',attack:'מכה',kick:'בעיטה',block:'הגנה',special:'מיוחד'};
+const keyLbl=c=>!c?'—':c.startsWith('Key')?c.slice(3):c.startsWith('Digit')?c.slice(5):c.startsWith('Numpad')?'Num '+c.slice(6):({ArrowLeft:'←',ArrowRight:'→',ArrowUp:'↑',ArrowDown:'↓',Comma:',',Period:'.',Slash:'/',Space:'רווח',Semicolon:';',Quote:"'",BracketLeft:'[',BracketRight:']',Backslash:'\\',Minus:'-',Equal:'=',ShiftLeft:'Shift',ShiftRight:'Shift ימני',ControlLeft:'Ctrl',ControlRight:'Ctrl ימני',AltLeft:'Alt',AltRight:'Alt ימני',Enter:'Enter',Backspace:'Backspace',Tab:'Tab'}[c]||c);
+function applyKeys(){for(let i=0;i<2;i++){const d=MAP_DEF[i],c=(CTRL.keys&&CTRL.keys[i])||{};for(const a in d)MAP[i][a]=c[a]?[...c[a]]:[...d[a]];}renderKbHelp();}
+function renderKbHelp(){const k=(i,a)=>MAP[i][a].slice(0,1).map(c=>`<kbd>${esc(keyLbl(c))}</kbd>`).join('');
+  for(const i of[0,1]){const el=$('#kb'+(i+1));if(el)el.innerHTML=`<strong>שחקן ${i+1}:</strong> ${k(i,'left')} ${k(i,'right')} תזוזה, ${k(i,'up')} קפיצה, ${k(i,'down')} כריעה, ${k(i,'attack')} מכה (רצף), ${k(i,'kick')} בעיטה, ${k(i,'special')} מיוחד, ${k(i,'block')} הגנה`;}}
+let keyWait=null;
+function renderKeys(){$('#keyTabs').innerHTML=[0,1].map(i=>`<table><tr><th colspan="2">שחקן ${i+1}${i===0?' (גם נגד המחשב)':''}</th></tr>${Object.keys(ACT_NAMES).map(a=>`<tr><td>${ACT_NAMES[a]}</td><td><button type="button" class="kbtn${keyWait&&keyWait.i===i&&keyWait.a===a?' wait':''}" data-key="${i}:${a}">${keyWait&&keyWait.i===i&&keyWait.a===a?'לחצו על מקש…':esc(MAP[i][a].map(keyLbl).join(' / '))}</button></td></tr>`).join('')}</table>`).join('');}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-key]');if(b){const[i,a]=b.dataset.key.split(':');keyWait={i:+i,a};renderKeys();return;}
+  const c=e.target.closest('[data-ctl]');if(!c)return;const t=c.dataset.ctl;
+  if(t==='keysReset'){delete CTRL.keys;saveCtrl();applyKeys();renderKeys();}
+  if(t==='padReset'){delete CTRL.pad;saveCtrl();applyPad();}
+  if(t==='edit')openPadEd();});
+addEventListener('keydown',e=>{if(!keyWait)return;e.preventDefault();e.stopImmediatePropagation();const{i,a}=keyWait;keyWait=null;
+  if(e.code!=='Escape'&&e.code!=='KeyP'){CTRL.keys=CTRL.keys||[{},{}];
+    const old=MAP[i][a].filter(x=>x!==e.code);for(let j=0;j<2;j++)for(const b in MAP[j]){if(j===i&&b===a)continue;if(MAP[j][b].includes(e.code)){const rest=MAP[j][b].filter(x=>x!==e.code);CTRL.keys[j][b]=rest.length?rest:old.slice(0,1);}}
+    CTRL.keys[i][a]=[e.code];saveCtrl();applyKeys();}
+  renderKeys();},true);
+// touch layout: positions are fractions of the screen, sizes in px before the user's scale
+const PAD_BASE={sp:70,atk:94,blk:70,kck:70};
+function padDefault(){const W0=innerWidth,H0=innerHeight;return{joy:{x:88/W0,y:(H0-84)/H0},atk:{x:(W0-65)/W0,y:(H0-65)/H0,s:1},blk:{x:(W0-149)/W0,y:(H0-53)/H0,s:1},sp:{x:(W0-149)/W0,y:(H0-149)/H0,s:1},kck:{x:(W0-233)/W0,y:(H0-53)/H0,s:1},kick:false,a:1};}
+function applyPad(){const pad=$('#pad'),P=CTRL.pad;pad.classList.toggle('custom',!!P);pad.classList.toggle('jright',!!(P&&P.joy.x>.5));
+  const kb=$('#pad .tb.kck');kb.hidden=!(P&&P.kick);
+  $$('#pad .tb').forEach(b=>{const k=b.classList.contains('sp')?'sp':b.classList.contains('atk')?'atk':b.classList.contains('blk')?'blk':'kck';
+    if(P){const q=P[k];b.style.setProperty('--x',q.x);b.style.setProperty('--y',q.y);b.style.setProperty('--w',Math.round(PAD_BASE[k]*q.s)+'px');b.style.setProperty('--a',P.a);}else{['--x','--y','--w','--a'].forEach(v=>b.style.removeProperty(v));}});
+  if(P){pad.style.setProperty('--jx',P.joy.x);pad.style.setProperty('--jy',P.joy.y);pad.style.setProperty('--a',P.a);}else['--jx','--jy','--a'].forEach(v=>pad.style.removeProperty(v));}
+let PE=null;
+const PE_LBL={joy:['🕹️','תנועה'],sp:['✨','מיוחד'],atk:['👊','מכה'],blk:['🛡️','הגנה'],kck:['🦶','בעיטה']};
+function openPadEd(){PE={d:JSON.parse(JSON.stringify(CTRL.pad||padDefault())),sel:'atk'};$('#padEd').hidden=false;tryLandscape();drawPadEd();}
+function drawPadEd(){const d=PE.d;$('#peZone').style.cssText=d.joy.x>.5?'right:0':'left:0';
+  $('#peItems').innerHTML=Object.keys(PE_LBL).filter(k=>k!=='kck'||d.kick).map(k=>{const q=d[k],w=k==='joy'?120:Math.round(PAD_BASE[k]*q.s);
+    return `<div class="pe-it${k==='joy'?' joy':''}${PE.sel===k?' sel':''}" data-pe-it="${k}" style="left:${q.x*100}%;top:${q.y*100}%;width:${w}px;height:${w}px;margin:${-w/2}px 0 0 ${-w/2}px;opacity:${d.a}"><i>${PE_LBL[k][0]}</i>${PE_LBL[k][1]}</div>`;}).join('');
+  $('#peSel').textContent='נבחר: '+PE_LBL[PE.sel][1];$('#peKick').setAttribute('aria-pressed',!!d.kick);$('#peOp').value=Math.round(d.a*100);}
+let peDrag=null;
+$('#padEd').addEventListener('pointerdown',e=>{const it=e.target.closest('[data-pe-it]');if(!it)return;e.preventDefault();PE.sel=it.dataset.peIt;peDrag={id:e.pointerId,k:PE.sel};drawPadEd();});
+$('#padEd').addEventListener('pointermove',e=>{if(!peDrag||e.pointerId!==peDrag.id)return;const q=PE.d[peDrag.k];q.x=clamp(e.clientX/innerWidth,.04,.96);q.y=clamp(e.clientY/innerHeight,.12,.96);
+  const el=$(`[data-pe-it="${peDrag.k}"]`);if(el){el.style.left=q.x*100+'%';el.style.top=q.y*100+'%';}if(peDrag.k==='joy')$('#peZone').style.cssText=q.x>.5?'right:0':'left:0';});
+addEventListener('pointerup',()=>{peDrag=null;});addEventListener('pointercancel',()=>{peDrag=null;});
+$('#peOp').addEventListener('input',e=>{PE.d.a=e.target.value/100;$$('.pe-it').forEach(x=>x.style.opacity=PE.d.a);});
+$('#padEd').addEventListener('click',e=>{const b=e.target.closest('[data-pe]');if(!b)return;const t=b.dataset.pe,d=PE.d,q=d[PE.sel];
+  if(t==='bigger'&&PE.sel!=='joy')q.s=Math.min(1.8,+(q.s+.1).toFixed(2));
+  if(t==='smaller'&&PE.sel!=='joy')q.s=Math.max(.6,+(q.s-.1).toFixed(2));
+  if(t==='kick'){d.kick=!d.kick;if(d.kick)PE.sel='kck';else if(PE.sel==='kck')PE.sel='atk';}
+  if(t==='mirror')for(const k of Object.keys(PE_LBL))d[k].x=1-d[k].x;
+  if(t==='reset'){PE.d=padDefault();PE.sel='atk';}
+  if(t==='cancel'||t==='save'){if(t==='save'){CTRL.pad=PE.d;saveCtrl();applyPad();}$('#padEd').hidden=true;PE=null;return;}
+  drawPadEd();});
+// joystick zone follows the side chosen in the editor
+applyKeys();applyPad();
+/* ---------- app mode: full screen on phones, install hint ---------- */
+const STANDALONE=matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||navigator.standalone===true;
+const IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+if(TOUCH&&!STANDALONE)document.addEventListener('pointerdown',()=>{if(!document.fullscreenElement)tryLandscape();},{passive:true,once:true});
+let instEv=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEv=e;showInstall();});
+function showInstall(){if(STANDALONE||!TOUCH)return;try{if(localStorage.getItem('familyFighter.instNo'))return;}catch(e){}
+  if(!IOS&&!instEv)return;let el=$('#instb');if(el)return;el=document.createElement('div');el.id='instb';el.className='instb';
+  el.innerHTML=IOS?`<span>📲 שיהיה כמו אפליקציה, על כל המסך: לוחצים על כפתור השיתוף <b>⬆️</b> ואז על <b>"הוספה למסך הבית"</b>.</span><button type="button" data-inst="no">הבנתי</button>`:`<span>📲 להתקין את המשחק כאפליקציה, על כל המסך?</span><button type="button" data-inst="yes">התקנה</button><button type="button" data-inst="no">לא עכשיו</button>`;
+  el.hidden=!$('#title').classList.contains('on');document.body.appendChild(el);}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-inst]');if(!b)return;if(b.dataset.inst==='yes'&&instEv){instEv.prompt();try{await instEv.userChoice;}catch(_){}instEv=null;}
+  try{localStorage.setItem('familyFighter.instNo','1');}catch(_){}const el=$('#instb');if(el)el.remove();});
+if(IOS)setTimeout(showInstall,2500);
 renderTitle();
 {const b=document.getElementById('boot');if(b){b.style.transition='opacity .35s';b.style.opacity=0;setTimeout(()=>b.remove(),400);}}
 })();
