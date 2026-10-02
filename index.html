@@ -2827,6 +2827,63 @@ function drawSeg(img,A,p,q,wm=1,nom=0){
   const a1=A[0],a2=A[1],dx=q.x-p.x,dy=q.y-p.y,L=Math.hypot(dx,dy)||1,ax=a2[0]-a1[0],ay=a2[1]-a1[1],al=Math.hypot(ax,ay)||1,s=L/al,sw=nom&&L>nom?nom/al:s;
   ctx.save();ctx.translate(p.x,p.y);ctx.rotate(Math.atan2(dy,dx)-Math.atan2(ay,ax));ctx.scale(sw*wm,s);ctx.drawImage(img,-a1[0],-a1[1]);ctx.restore();
 }
+/* ---------- skinned limbs: each body part is a soft mesh bent by the bones on both sides of a joint (no hard seams) ---------- */
+// near a joint the picture follows a mix of the two bones (linear blend skinning), like skin over a knee or an elbow
+const SKIN_IDS=new Set((window.__T&&window.__T.skin)||['nadav','ron']),SKIN_Z=(window.__T&&window.__T.sz)||.38;
+const rotOf=(A,p,q)=>Math.atan2(q.y-p.y,q.x-p.x)-Math.atan2(A[1][1]-A[0][1],A[1][0]-A[0][0]);
+const smo=x=>x<=0?0:x>=1?1:x*x*(3-2*x);
+function triImg(img,s0,s1,s2,d0,d1,d2){
+  // inflate the destination triangle a hair so neighbouring triangles never show a crack
+  const cx=(d0.x+d1.x+d2.x)/3,cy=(d0.y+d1.y+d2.y)/3,inf=(d)=>{const dx=d.x-cx,dy=d.y-cy,l=Math.hypot(dx,dy)||1;return{x:d.x+dx/l*.7,y:d.y+dy/l*.7};};
+  const e0=inf(d0),e1=inf(d1),e2=inf(d2);
+  const x0=s0[0],y0=s0[1],x1=s1[0],y1=s1[1],x2=s2[0],y2=s2[1],den=(x1-x0)*(y2-y0)-(x2-x0)*(y1-y0);if(Math.abs(den)<1e-6)return;
+  const a=((d1.x-d0.x)*(y2-y0)-(d2.x-d0.x)*(y1-y0))/den,b=((d1.y-d0.y)*(y2-y0)-(d2.y-d0.y)*(y1-y0))/den,
+    c=((d2.x-d0.x)*(x1-x0)-(d1.x-d0.x)*(x2-x0))/den,d=((d2.y-d0.y)*(x1-x0)-(d1.y-d0.y)*(x2-x0))/den,e=d0.x-a*x0-c*y0,f=d0.y-b*x0-d*y0;
+  ctx.save();ctx.beginPath();ctx.moveTo(e0.x,e0.y);ctx.lineTo(e1.x,e1.y);ctx.lineTo(e2.x,e2.y);ctx.closePath();ctx.clip();ctx.transform(a,b,c,d,e,f);
+  // only the source pixels under this triangle are drawn
+  const W0=img.width,H0=img.height,bx=Math.max(0,Math.floor(Math.min(x0,x1,x2))-2),by=Math.max(0,Math.floor(Math.min(y0,y1,y2))-2),bw=Math.min(W0,Math.ceil(Math.max(x0,x1,x2))+2)-bx,bh=Math.min(H0,Math.ceil(Math.max(y0,y1,y2))+2)-by;
+  if(bw>0&&bh>0)ctx.drawImage(img,bx,by,bw,bh,bx,by,bw,bh);ctx.restore();}
+// one thin band of the mesh as a single clipped piece (4 corners, affine from 3 of them): half the work of two triangles
+function quadImg(img,a,b,c,d){ // a,b top row (left,right), c,d bottom row; each {s:[x,y],d:{x,y}}
+  const cx=(a.d.x+b.d.x+c.d.x+d.d.x)/4,cy=(a.d.y+b.d.y+c.d.y+d.d.y)/4,inf=q=>{const dx=q.x-cx,dy=q.y-cy,l=Math.hypot(dx,dy)||1;return{x:q.x+dx/l*.7,y:q.y+dy/l*.7};};
+  // affine through a, b and the midpoint of the bottom edge keeps both rows close
+  const m={s:[(c.s[0]+d.s[0])/2,(c.s[1]+d.s[1])/2],d:{x:(c.d.x+d.d.x)/2,y:(c.d.y+d.d.y)/2}};
+  const x0=a.s[0],y0=a.s[1],x1=b.s[0],y1=b.s[1],x2=m.s[0],y2=m.s[1],den=(x1-x0)*(y2-y0)-(x2-x0)*(y1-y0);if(Math.abs(den)<1e-6)return;
+  const d0=a.d,d1=b.d,d2=m.d,A=((d1.x-d0.x)*(y2-y0)-(d2.x-d0.x)*(y1-y0))/den,B=((d1.y-d0.y)*(y2-y0)-(d2.y-d0.y)*(y1-y0))/den,
+    C=((d2.x-d0.x)*(x1-x0)-(d1.x-d0.x)*(x2-x0))/den,D=((d2.y-d0.y)*(x1-x0)-(d1.y-d0.y)*(x2-x0))/den,E=d0.x-A*x0-C*y0,F=d0.y-B*x0-D*y0;
+  const e0=inf(a.d),e1=inf(b.d),e2=inf(d.d),e3=inf(c.d);
+  ctx.save();ctx.beginPath();ctx.moveTo(e0.x,e0.y);ctx.lineTo(e1.x,e1.y);ctx.lineTo(e2.x,e2.y);ctx.lineTo(e3.x,e3.y);ctx.closePath();ctx.clip();ctx.transform(A,B,C,D,E,F);
+  const W0=img.width,H0=img.height,by=Math.max(0,Math.floor(Math.min(y0,c.s[1]))-2),bh=Math.min(H0,Math.ceil(Math.max(y0,c.s[1]))+2)-by;if(bh>0)ctx.drawImage(img,0,by,W0,bh,0,by,W0,bh);ctx.restore();}
+function drawSkin(img,A,p,q,wm,nom,thP,thC){
+  const a1=A[0],a2=A[1],ax=a2[0]-a1[0],ay=a2[1]-a1[1],al=Math.hypot(ax,ay)||1,ux=ax/al,uy=ay/al;
+  const L=Math.hypot(q.x-p.x,q.y-p.y)||1,s=L/al,sx=(nom&&L>nom?nom/al:s)*wm,sy=s,th=rotOf(A,p,q);
+  const W0=img.width,H0=img.height,z=SKIN_Z*al;
+  const map=(px,py,r,o,an)=>{const lx=(px-an[0])*sx,ly=(py-an[1])*sy,c=Math.cos(r),si=Math.sin(r);return{x:o.x+c*lx-si*ly,y:o.y+si*lx+c*ly};};
+  const P=(px,py)=>{const t=((px-a1[0])*ux+(py-a1[1])*uy)/al;let wp=0,wc=0;
+    if(thP!=null)wp=t<=0?.5+.5*smo(-t/SKIN_Z):.5*(1-smo(t/SKIN_Z));
+    if(thC!=null){const u=1-t;wc=u<=0?.5+.5*smo(-u/SKIN_Z):.5*(1-smo(u/SKIN_Z));}
+    const wt=Math.max(0,1-wp-wc),m=map(px,py,th,p,a1);let x=m.x*wt,y=m.y*wt;
+    if(wp){const k=map(px,py,thP,p,a1);x+=k.x*wp;y+=k.y*wp;}if(wc){const k=map(px,py,thC,q,a2);x+=k.x*wc;y+=k.y*wc;}return{x,y};};
+  // rows: dense around both joints, one rigid band in the middle
+  const ys=new Set([0,H0]);for(const k of[-1,-.4,.25,1]){if(thP!=null)ys.add(Math.round(a1[1]+k*z));if(thC!=null)ys.add(Math.round(a2[1]-k*z));}
+  const rows=[...ys].filter(y=>y>=0&&y<=H0).sort((a,b)=>a-b),xs=[0,W0];
+  let prev=rows.map(()=>null);
+  const V=rows.map(y=>xs.map(x=>({s:[x,y],d:P(x,y)})));
+  for(let r=0;r<rows.length-1;r++){const A0=V[r][0],A1=V[r][1],B0=V[r+1][0],B1=V[r+1][1];triImg(img,A0.s,A1.s,B1.s,A0.d,A1.d,B1.d);triImg(img,A0.s,B1.s,B0.s,A0.d,B1.d,B0.d);}
+}
+// the hips: the lower part of the trousers follows each thigh (front half the front leg, back half the back leg), so there is no hard cut where the legs start
+function drawHipsSkin(img,A,hP,hQ,wm,jF,jB,hipF,hipB,thF,thB){
+  const a1=A[0],a2=A[1],al=Math.hypot(a2[0]-a1[0],a2[1]-a1[1])||1,L=Math.hypot(hQ.x-hP.x,hQ.y-hP.y)||1,sy=L/al,sx=sy*wm,th=rotOf(A,hP,hQ);
+  const map=(px,py,r,o,an)=>{const lx=(px-an[0])*sx,ly=(py-an[1])*sy,c=Math.cos(r),si=Math.sin(r);return{x:o.x+c*lx-si*ly,y:o.y+si*lx+c*ly};};
+  const W0=img.width,H0=img.height,jy=(jF[1]+jB[1])/2,z=Math.max(8,(H0-jy)*.9),xm=(jF[0]+jB[0])/2,xw=Math.max(6,Math.abs(jF[0]-jB[0])*.35);
+  const P=(px,py)=>{const m=map(px,py,th,hP,a1),wl=.85*smo((py-(jy-z*.25))/z);if(wl<=0)return m;
+    const sf=jF[0]<jB[0]?1-smo((px-xm+xw)/(2*xw)):smo((px-xm+xw)/(2*xw)),f=map(px,py,thF,hipF,jF),b=map(px,py,thB,hipB,jB);
+    return{x:m.x*(1-wl)+wl*(f.x*sf+b.x*(1-sf)),y:m.y*(1-wl)+wl*(f.y*sf+b.y*(1-sf))};};
+  const ys=[0];for(let k=0;k<=3;k++)ys.push(Math.round(jy-z*.3+k*(H0-jy+z*.3)/3));const rows=[...new Set(ys)].filter(y=>y>=0&&y<=H0).sort((a,b)=>a-b);if(rows[rows.length-1]<H0)rows.push(H0);
+  const xs=[0,W0*.3,W0*.5,W0*.7,W0].map(Math.round);
+  const V=rows.map(y=>xs.map(x=>({s:[x,y],d:P(x,y)})));
+  for(let r=0;r<rows.length-1;r++)for(let c=0;c<xs.length-1;c++){const A0=V[r][c],A1=V[r][c+1],B0=V[r+1][c],B1=V[r+1][c+1];triImg(img,A0.s,A1.s,B1.s,A0.d,A1.d,B1.d);triImg(img,A0.s,B1.s,B0.s,A0.d,B1.d,B0.d);}
+}
 function exprOf(f){const s=f.state;if(s==='ko'||s==='dizzy'||s==='faint')return'ko';if(s==='hit'||s==='grabbed'||(f.stun>0&&s!=='block'))return'hit';if(f.atk||f.grab||s==='chomp')return'attack';return'neutral';}
 function segMap(A,p,q,wm,pt){
   const a1=A[0],a2=A[1],dx=q.x-p.x,dy=q.y-p.y,s=Math.hypot(dx,dy)/(Math.hypot(a2[0]-a1[0],a2[1]-a1[1])||1);
@@ -2872,16 +2929,20 @@ function drawSpriteBody(f,P,mode,R){
     eB={x:eB0.x+(eT.x-eB0.x)*tk,y:eB0.y+(eT.y-eB0.y)*tk},bH={x:bHt.x+(hT.x-bHt.x)*tk,y:bHt.y+(hT.y-bHt.y)*tk};
   const aF=romC(hipF,reachC(hipF,{x:P.fF.x,y:P.fF.y-D.ankle},D.legT+D.legS),D.legT,D.legS,150),aB=romC(hipB,reachC(hipB,{x:P.bF.x,y:P.bF.y-D.ankle},D.legT+D.legS),D.legT,D.legS,150);
   const kF=ik2(hipF,aF,D.legT,D.legS,1),kB=ik2(hipB,aB,D.legT,D.legS,1);
+  const SK=SKIN_IDS.has(f.c.id)&&mode==='full',thHip=rotOf(D.hips,hP,hQ);
+  const thigh=(S,hj,k,a)=>{if(SK)drawSkin(S.thigh,D.thigh,hj,k,D.tlw,0,thHip,rotOf(D.shin,k,a));else drawSeg(S.thigh,D.thigh,hj,k,D.tlw);};
+  const shin=(S,hj,k,a)=>{if(SK)drawSkin(S.shin,D.shin,k,a,D.slw,D.legS,rotOf(D.thigh,hj,k),null);else drawSeg(S.shin,D.shin,k,a,D.slw,D.legS);};
   const leg=(S,hj,k,a)=>{
-    if(!D.thighOver)drawSeg(S.thigh,D.thigh,hj,k,D.tlw);
+    if(!D.thighOver)thigh(S,hj,k,a);
     const im=S.shoe,sc=D.shoe.w/im.width,grounded=f.y>=GROUND-1&&a.y>=-D.ankle-2,rot=grounded?0:Math.atan2(a.y-k.y,a.x-k.x)-Math.PI/2;
     const shoe=()=>{ctx.save();ctx.translate(a.x,a.y);ctx.rotate(rot);ctx.scale(sc,sc);ctx.drawImage(im,-D.shoe.a[0],-D.shoe.a[1]);ctx.restore();};
-    if(D.shoeOver){drawSeg(S.shin,D.shin,k,a,D.slw,D.legS);shoe();}else{shoe();drawSeg(S.shin,D.shin,k,a,D.slw,D.legS);}
-    if(D.thighOver)drawSeg(S.thigh,D.thigh,hj,k,D.tlw);
+    if(D.shoeOver){shin(S,hj,k,a);shoe();}else{shoe();shin(S,hj,k,a);}
+    if(D.thighOver)thigh(S,hj,k,a);
   };
-  const arm=(S,sj,e,h,near)=>{drawSeg(S.uarm,D.uarm,sj,e,near&&SOCK&&D.uwN?D.uwN:D.uw);drawSeg(S.farm,D.farm,e,h,D.fw,D.armF);};
+  const thTor=rotOf(D.torso,tP,tQ);
+  const arm=(S,sj,e,h,near)=>{const uw=near&&SOCK&&D.uwN?D.uwN:D.uw;if(SK){drawSkin(S.uarm,D.uarm,sj,e,uw,0,thTor,rotOf(D.farm,e,h));drawSkin(S.farm,D.farm,e,h,D.fw,D.armF,rotOf(D.uarm,sj,e),null);}else{drawSeg(S.uarm,D.uarm,sj,e,uw);drawSeg(S.farm,D.farm,e,h,D.fw,D.armF);}};
   if(!f.bigArm)arm(B,farS,eF,fH);leg(B,hipB,kB,aB);leg(V,hipF,kF,aF);
-  drawSeg(V.hips,D.hips,hP,hQ,D.hw);
+  if(SK)drawHipsSkin(V.hips,D.hips,hP,hQ,D.hw,D.jHipF,D.jHipB,hipF,hipB,rotOf(D.thigh,hipF,kF),rotOf(D.thigh,hipB,kB));else drawSeg(V.hips,D.hips,hP,hQ,D.hw);
   const hv={x:P.head.x-P.sh.x,y:P.head.y-P.sh.y},vl=Math.hypot(hv.x,hv.y)||1,v={x:hv.x/vl,y:hv.y/vl},nl=D.neckLen||9,chin={x:neck.x+v.x*nl,y:neck.y+v.y*nl};
   // head: the face sits on a short neck that is as wide as the real chin in the photo and starts right under it;
   // neck first, then the shirt over the neck's base, then the face over the neck's top
