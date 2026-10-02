@@ -815,7 +815,7 @@ const headK=sc=>1+(1-sc)*1.3;
 
 // pacing: attack frames are stretched and damage softened so a round lasts about a minute
 const PACE=1.3,DMG_K=.65;
-const TT=window.__T||{};const HANG=TT.hg??1,HANG_A=TT.ha??.6,GUARD_A=TT.ga??2.3,SOCK=TT.sk??1,SOCK_X=TT.sx??.16,SOCK_Y=TT.sy??1.5,SOCK_W=TT.sw??.24,SOCK_MINW=TT.mw??1,CAP_LEN=TT.cl??.45,CAP_S=TT.cs??1.04,CAP_UP=TT.cu??.04,CAP_TILT=TT.ct??0,ARM_UNDER=TT.au??0,TUCK=TT.tk??1,TUCK_A=TT.ta??-.08,NECK_SHOW=TT.ns??.1,G_LEAD=TT.gl??.3,G_REAR_X=TT.gx??.12,G_REAR_Y=TT.gy??.05,REAR_ELBOW=TT.re??-1,LEAD_ELBOW=-1,CAP_R=TT.cap??0,WIN_SPREAD=TT.wx??16;
+const TT=window.__T||{};const FAR_IN=TT.fi??.3,HANG=TT.hg??1,HANG_A=TT.ha??.6,GUARD_A=TT.ga??2.3,SOCK=TT.sk??1,SOCK_X=TT.sx??.16,SOCK_Y=TT.sy??1.5,SOCK_W=TT.sw??.24,SOCK_MINW=TT.mw??1,CAP_LEN=TT.cl??.45,CAP_S=TT.cs??1.04,CAP_UP=TT.cu??.04,CAP_TILT=TT.ct??0,ARM_UNDER=TT.au??0,TUCK=TT.tk??1,TUCK_A=TT.ta??-.08,NECK_SHOW=TT.ns??.1,G_LEAD=TT.gl??.3,G_REAR_X=TT.gx??.12,G_REAR_Y=TT.gy??.05,REAR_ELBOW=TT.re??-1,LEAD_ELBOW=-1,CAP_R=TT.cap??0,WIN_SPREAD=TT.wx??16;
 function makeFighter(c){
   const mv={};for(const k of['punch','kick','low','air']){mv[k]={...BASE[k],...(c.mv[k]||{})};for(const q of['s','a','r'])mv[k][q]=Math.round(mv[k][q]*PACE);}
   mv.special={s:10,a:1,r:10,dmg:0,kb:0,stun:0,m:0,y1:-190,y2:0,reach:80,...c.mv.special};
@@ -2591,7 +2591,7 @@ function socketFit(R){
   let w0=U.W,w1=0;const jr=Math.round(a1[1]);for(let i=0;i<U.W;i++)if(A(U,i,jr)){w0=Math.min(w0,i);w1=Math.max(w1,i);}const wu=Math.max(8,w1-w0);
   const t1=D.torso[0],t2=D.torso[1],st=(D.torsoTop-D.hem)/(Math.hypot(t2[0]-t1[0],t2[1]-t1[1])||1),su=D.armU/(Math.hypot(a2[0]-a1[0],a2[1]-a1[1])||1);
   const want=T.W*SOCK_W*st*(D.tw||1),uwN=Math.max((D.uw||1)*SOCK_MINW,clamp(want/(wu*su),.7,1.7));
-  D.jNear=[x0+T.W*SOCK_X,ys+(a1[1]-ut)*su/st*SOCK_Y];D.uwN=uwN;
+  D.jNear=[x0+T.W*(D.sockX??SOCK_X),ys+(a1[1]-ut)*su/st*(D.sockY??SOCK_Y)];D.uwN=uwN;
 }
 function capOf(R,img,A){const k=img===R.n.uarm?'n':img===R.d.uarm?'d':'w';R.cap=R.cap||{};if(R.cap[k])return R.cap[k];
   const a1=A[0],a2=A[1],al=Math.hypot(a2[0]-a1[0],a2[1]-a1[1]),cut=Math.min(img.height,Math.round(a1[1]+al*CAP_LEN)),c=document.createElement('canvas');c.width=img.width;c.height=cut;
@@ -2634,7 +2634,8 @@ function drawSpriteBody(f,P,mode,R){
   // which arm does what (side-view fighting-game convention): the FAR arm, on the opponent's side, is the striking hand and is drawn
   // behind the body, so a punch shoots out past the chest instead of across it; the NEAR arm hangs from the near shoulder along the
   // side of the body (elbow down by the waist) and only its forearm comes up to guard the chin, like the character artwork
-  const nearS=shF,farS=shB;
+  // the far shoulder sits a little inside the torso outline (it is turned away from the camera), so the far sleeve tucks behind the chest
+  const nearS=shF,farS={x:shB.x+(shF.x-shB.x)*(D.farIn??FAR_IN),y:shB.y+(shF.y-shB.y)*(D.farIn??FAR_IN)};
   const L=D.armU+D.armF,ext=pt=>clamp((Math.hypot(pt.x-P.sh.x,pt.y-P.sh.y)-38)/24,0,1),shC={x:(shF.x+shB.x)/2,y:(shF.y+shB.y)/2},shX=Math.max(shF.x,shB.x),shY=Math.min(shF.y,shB.y);
   // both hands fight: in a punch combo the near hand (the busier one) throws every other punch, the far hand the others; the hand
   // that is not striking stays up in guard
