@@ -508,13 +508,13 @@ const CHARS=[
   mv:{kick:{s:11,a:5,r:16,dmg:13,reach:96,y1:-62,y2:0,kb:9,stun:20,m:10,armor:true},
       special:{kind:'vacuum',s:14,a:1,r:16}},
   quote:'עכשיו הסלון נקי.'},
- {id:'nadav',name:'נדב',role:'אבא',color:'#2F9BFF',icon:'☀️',sc:1.08,hp:184,speed:3.0,jump:-13.6,power:.87,
+ {id:'nadav',farMain:true,name:'נדב',role:'אבא',color:'#2F9BFF',icon:'☀️',sc:1.08,hp:184,speed:3.0,jump:-13.6,power:.87,
   style:'תותח כבד',
   strong:'הפאנל נותן לו את הטווח הכי ארוך במשפחה, והמכות שלו הכי כבדות.',
   weak:'הכי איטי בהליכה ובקפיצה, ומטרה גדולה.',
   sp:{name:'פאנל סולארי',desc:'מכה מלמעלה עם הפאנל ששולחת גל שמש על הרצפה. קופצים מעליו או חוטפים.',cost:50},
-  mv:{punch:{s:9,a:5,r:16,dmg:9,reach:100,y1:-165,y2:-92,kb:6,stun:17,m:9},
-      kick:{s:10,a:5,r:17,dmg:10,reach:104,y1:-60,y2:0,kb:7,stun:17,m:9},
+  mv:{punch:{s:6,a:4,r:11,dmg:9,reach:100,y1:-165,y2:-92,kb:6,stun:17,m:9},
+      kick:{s:7,a:5,r:13,dmg:10,reach:104,y1:-60,y2:0,kb:7,stun:17,m:9},
       special:{kind:'solar',s:16,a:5,r:22,dmg:12,reach:118,y1:-200,y2:0,kb:8,stun:20,m:0}},
   quote:'זה נקרא החזר השקעה.'},
  {id:'adi',name:'עדי',role:'בן 15',color:'#8B5CF6',icon:'💻',sc:.96,hp:224,speed:4.5,jump:-15.5,power:1.08,
@@ -792,6 +792,16 @@ function chinOf(im){try{const W0=im.naturalWidth,H0=im.naturalHeight,c=document.
   const hx=v=>Math.round(Math.min(255,v)).toString(16).padStart(2,'0'),col=sn>20?'#'+hx(sr/sn*1.02)+hx(sg/sn)+hx(sb/sn*.98):null;
   return{x:(x0+x1)/2/W0,w:Math.min(.5,(x1-x0)/W0),b:(yb+1)/H0,col};}catch(e){return{x:.5,w:.3,b:1};}}
 const RIG_PARTS=new Set(['torso','hips','uarm','farm','thigh','shin','shoe','f_neutral','f_attack','f_hit','f_ko','f_profile','panel','drone']);
+// torso pictures whose collar has a drawn inside (back of the collar): front collar line at the centre (y), half width of the opening,
+// optional top of the inside; measured by hand on each picture. The neck is drawn over that inside and under the front collar.
+const COLLAR={hali:[100,44,18],nadav:[48,34],aviv:[45,52],nevo:[58,46],alon:[80,26],ron:[54,32],shahaf:[42,34,22]};
+function collarOf(im,j){try{const W0=im.naturalWidth||im.width,H0=im.naturalHeight||im.height,c=document.createElement('canvas');c.width=W0;c.height=H0;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(im,0,0);
+  const d=x.getImageData(0,0,W0,H0).data,dark=(i,k)=>{if(i<0||k<0||i>=W0||k>=H0)return false;const o=(k*W0+i)*4;return d[o+3]>180&&(.299*d[o]+.587*d[o+1]+.114*d[o+2])<75;};
+  const cx=Math.round(j[0]);let y=Math.round(j[1]);const lim=Math.min(H0-1,y+Math.round(H0*.3));
+  while(y<lim&&!dark(cx,y))y++;while(y<lim&&dark(cx,y))y++;const y0=y;   // just below the back collar's outline
+  while(y<lim&&!dark(cx,y))y++;const y2=y<lim?y:Math.round(j[1]+H0*.07); // the top line of the front collar
+  const ym=Math.round((y0+y2)/2);let l=cx,r=cx;while(l>cx-W0*.35&&!dark(l,ym))l--;while(r<cx+W0*.35&&!dark(r,ym))r++;
+  return{cx,y0:j[1],y2,a:Math.max(4,(r-l)/2*1.05)};}catch(e){return null;}}
 function loadRig(id){
   if(RIG[id])return RIG[id].ready;
   const src=RIG_SRC[id];if(!src)return Promise.resolve(false);
@@ -801,7 +811,7 @@ function loadRig(id){
       if(!RIG_PARTS.has(k)){R.n[k]=im;return;}   // props: decoded once, no tinted copies
       const base=k.startsWith('f_')?featherCv(im,Math.round(im.naturalHeight*.02)+2):im;if(k.startsWith('f_'))R.chin[k]=chinOf(im);
       R.n[k]=base;R.d[k]=tintCv(base,'#140A2B',.12);R.w[k]=tintCv(base,'#FFFFFF',.6);});}))
-    .then(()=>{try{socketFit(R);}catch(e){}R.ok=true;return true;}).catch(()=>false);
+    .then(()=>{try{socketFit(R);}catch(e){}{const m=COLLAR[id],j=R.def.jNeck;R.collar=m?{cx:j[0],y0:m[2]??Math.max(j[1],m[0]-(TT.cd??14)),y2:m[0],a:m[1]}:null;}R.ok=true;return true;}).catch(()=>false);
   return R.ready;
 }
 const rigOf=f=>{const R=RIG[f.c.id];return R&&R.ok&&!saved.photos[f.c.id]?R:null;};
@@ -974,7 +984,7 @@ function drawPops(){for(const q of pops){const k=q.t/48;if(k>=1)continue;const a
   ctx.save();ctx.globalAlpha=a;ctx.translate(q.x,q.y-k*46);ctx.scale(s,s);ctx.font='900 30px Heebo, Arial, sans-serif';ctx.textAlign='center';ctx.direction='rtl';ctx.lineJoin='round';ctx.lineWidth=7;ctx.strokeStyle=INK;ctx.strokeText(q.txt,0,0);ctx.fillStyle=q.col;ctx.fillText(q.txt,0,0);ctx.restore();}
 }
 const PACE=1.3,DMG_K=.65;
-const TT=window.__T||{};const FAR_IN=TT.fi??.3,HANG=TT.hg??1,HANG_A=TT.ha??.6,GUARD_A=TT.ga??2.3,SOCK=TT.sk??1,SOCK_X=TT.sx??.16,SOCK_Y=TT.sy??1.5,SOCK_W=TT.sw??.24,SOCK_MINW=TT.mw??1,CAP_LEN=TT.cl??.45,CAP_S=TT.cs??1.04,CAP_UP=TT.cu??.04,CAP_TILT=TT.ct??0,ARM_UNDER=TT.au??0,TUCK=TT.tk??1,TUCK_A=TT.ta??-.08,NECK_SHOW=TT.ns??.07,NECK_W=TT.nw??.3,G_LEAD=TT.gl??.3,G_REAR_X=TT.gx??.12,G_REAR_Y=TT.gy??.05,REAR_ELBOW=TT.re??-1,LEAD_ELBOW=-1,CAP_R=TT.cap??0,WIN_SPREAD=TT.wx??16;
+const TT=window.__T||{};const FAR_IN=TT.fi??.3,HANG=TT.hg??1,HANG_A=TT.ha??.6,GUARD_A=TT.ga??2.3,SOCK=TT.sk??1,SOCK_X=TT.sx??.16,SOCK_Y=TT.sy??1.5,SOCK_W=TT.sw??.24,SOCK_MINW=TT.mw??1,CAP_LEN=TT.cl??.45,CAP_S=TT.cs??1.04,CAP_UP=TT.cu??.04,CAP_TILT=TT.ct??0,ARM_UNDER=TT.au??0,TUCK=TT.tk??1,TUCK_A=TT.ta??-.08,NECK_SHOW=TT.ns??.1,NECK_W=TT.nw??.3,G_LEAD=TT.gl??.3,G_REAR_X=TT.gx??.12,G_REAR_Y=TT.gy??.05,REAR_ELBOW=TT.re??-1,LEAD_ELBOW=-1,CAP_R=TT.cap??0,WIN_SPREAD=TT.wx??16;
 function makeFighter(c){
   const mv={};for(const k of['punch','kick','low','air']){mv[k]={...BASE[k],...(c.mv[k]||{})};for(const q of['s','a','r'])mv[k][q]=Math.round(mv[k][q]*PACE);}
   mv.special={s:10,a:1,r:10,dmg:0,kb:0,stun:0,m:0,y1:-190,y2:0,reach:80,...c.mv.special};
@@ -1552,7 +1562,7 @@ function startAtk(f,type,crouch){
   if(type!=='special')f.chainN++;
   f.atk={type,f:0,hit:false,crouch:!!crouch&&type==='punch'};f.state='atk';f.buf={};
   // single punches: near hand twice, far hand once (the near hand stays the busier one, but both hands throw)
-  if(type==='punch'){f.pN=(f.pN||0)+1;f.atk.near=f.pN%3!==0;}
+  if(type==='punch'){f.pN=(f.pN||0)+1;f.atk.near=f.c.farMain?f.pN%3===0:f.pN%3!==0;}
   if(type!=='air')f.vx=0;
   if(type!=='special')sfx('whoosh',0,f);
 }
@@ -1560,7 +1570,7 @@ function startChain(f,step){
   const seq=CHAIN[f.c.id]||['punch','punch','kick'];
   if(step>=seq.length)step=0;
   f.chainStep=step;startAtk(f,seq[step]);
-  f.atk.chain=step;if(f.atk.type==='punch')f.atk.near=step%2===0;f.atk.fin=seq.length>1&&step===seq.length-1;
+  f.atk.chain=step;if(f.atk.type==='punch')f.atk.near=f.c.farMain?step%2===1:step%2===0;f.atk.fin=seq.length>1&&step===seq.length-1;
   if(f.atk.fin)sfx('shout',0,f);
 }
 function doDash(f,dir){f.dashT=12;f.vx=f.facing*dir*11;f.state=dir>0?'dash':'dashb';sfx('dash');dust(f.x);}
@@ -2948,9 +2958,17 @@ function drawSpriteBody(f,P,mode,R){
   // neck first, then the shirt over the neck's base, then the face over the neck's top
   const ex=exprOf(f),prof=ex==='neutral'&&V.f_profile,fk=prof?'f_profile':(V['f_'+ex]?'f_'+ex:'f_neutral'),face=V[fk],h=D.face.h,w=h*face.width/face.height,hs=f.hsq||0,
     cx=prof?D.face.chinX.profile:.5,C=(R.chin&&R.chin[fk])||{x:.5,w:.3,b:1},ang=Math.atan2(v.y,v.x)+Math.PI/2+(P.ht||0),ax={x:Math.cos(ang),y:Math.sin(ang)},
-    gap=h*NECK_SHOW+(D.neckGap||0),base={x:neck.x+v.x*gap,y:neck.y+v.y*gap},
+    CL=R.collar,mp=(x,y)=>segMap(D.torso,tP,tQ,D.tw,[x,y]),
+    // with a drawn collar the chin sits a short way above the back line of the collar, so only a little neck shows
+    gap=h*NECK_SHOW+(D.neckGap||0),c0=CL&&mp(CL.cx,CL.y0),ng=h*(TT.nc??.05)+(D.neckGap||0),base=CL?{x:c0.x+v.x*ng,y:c0.y+v.y*ng}:{x:neck.x+v.x*gap,y:neck.y+v.y*gap},
     off=(C.x-cx)*w,cpt={x:base.x+ax.x*off,y:base.y+ax.y*off},
-    tw=Math.max(w*(D.neckW??NECK_W),C.w*w*.8)/2,bw=tw*1.12,nb={x:neck.x-v.x*h*.12,y:neck.y-v.y*h*.12},nt={x:cpt.x+v.x*h*.1,y:cpt.y+v.y*h*.1};
+    cw=CL?Math.hypot(mp(CL.cx+CL.a,CL.y0).x-mp(CL.cx-CL.a,CL.y0).x,mp(CL.cx+CL.a,CL.y0).y-mp(CL.cx-CL.a,CL.y0).y)/2:0,
+    tw=Math.max(w*(D.neckW??NECK_W),C.w*w*.8)/2,bw=Math.max(tw*1.12,cw*1.04),nb=CL?mp(CL.cx,CL.y2+(CL.y2-CL.y0)*.5):{x:neck.x-v.x*h*.12,y:neck.y-v.y*h*.12},nt={x:cpt.x+v.x*h*.1,y:cpt.y+v.y*h*.1};
+  // the shirt is worn over the neck: the torso is drawn first, then the neck only above the FRONT line of the collar,
+  // so the neck covers the inside/back of the collar but the front collar band stays in front of it
+  if(CL)drawSeg(V.torso,D.torso,tP,tQ,D.tw);
+  ctx.save();if(CL){const A2=CL.a,H0=V.torso.height;let q0;ctx.beginPath();q0=mp(CL.cx-A2*2.6,CL.y0-H0*.9);ctx.moveTo(q0.x,q0.y);q0=mp(CL.cx+A2*2.6,CL.y0-H0*.9);ctx.lineTo(q0.x,q0.y);q0=mp(CL.cx+A2*2.6,CL.y0);ctx.lineTo(q0.x,q0.y);
+    for(let k=0;k<=16;k++){const t=k/16*Math.PI;q0=mp(CL.cx+A2*Math.cos(t),CL.y0+(CL.y2-CL.y0)*Math.sin(t));ctx.lineTo(q0.x,q0.y);}q0=mp(CL.cx-A2*2.6,CL.y0);ctx.lineTo(q0.x,q0.y);ctx.closePath();ctx.clip();}
   {const nc=C.col?mixC(C.col,D.neck,.5):D.neck,mid={x:(nb.x+nt.x)/2,y:(nb.y+nt.y)/2},pin=.1,q=np();
    q.moveTo(nb.x-ax.x*bw,nb.y-ax.y*bw);q.quadraticCurveTo(mid.x-ax.x*tw*(1-pin),mid.y-ax.y*tw*(1-pin),nt.x-ax.x*tw,nt.y-ax.y*tw);q.lineTo(nt.x+ax.x*tw,nt.y+ax.y*tw);
    q.quadraticCurveTo(mid.x+ax.x*tw*(1-pin),mid.y+ax.y*tw*(1-pin),nb.x+ax.x*bw,nb.y+ax.y*bw);q.closePath();
@@ -2962,7 +2980,8 @@ function drawSpriteBody(f,P,mode,R){
    ctx.save();ctx.strokeStyle='rgba(20,10,43,.85)';ctx.lineWidth=Math.max(1.2,h*.022);ctx.lineCap='round';const sd=q2=>{ctx.beginPath();q2();ctx.stroke();};
    sd(()=>{ctx.moveTo(nb.x-ax.x*bw,nb.y-ax.y*bw);ctx.quadraticCurveTo(mid.x-ax.x*tw*(1-pin),mid.y-ax.y*tw*(1-pin),nt.x-ax.x*tw,nt.y-ax.y*tw);});
    sd(()=>{ctx.moveTo(nb.x+ax.x*bw,nb.y+ax.y*bw);ctx.quadraticCurveTo(mid.x+ax.x*tw*(1-pin),mid.y+ax.y*tw*(1-pin),nt.x+ax.x*tw,nt.y+ax.y*tw);});ctx.restore();}}
-  drawSeg(V.torso,D.torso,tP,tQ,D.tw);
+  ctx.restore();
+  if(!CL)drawSeg(V.torso,D.torso,tP,tQ,D.tw);
   // the image's chin bottom (C.b) lands exactly on the top of the visible neck
   ctx.save();ctx.translate(base.x,base.y);ctx.rotate(ang);ctx.scale(1+hs*.16,1-hs*.13);ctx.drawImage(face,-w*cx,-h*C.b,w,h);ctx.restore();
   if(D.panel&&V.panel&&!f.noPanel){const im=V.panel,ang=Math.atan2(fH.y-eF.y,fH.x-eF.x),sc=D.panel.len/im.height;
