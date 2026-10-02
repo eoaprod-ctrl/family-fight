@@ -815,7 +815,7 @@ const headK=sc=>1+(1-sc)*1.3;
 
 // pacing: attack frames are stretched and damage softened so a round lasts about a minute
 const PACE=1.3,DMG_K=.65;
-const TT=window.__T||{};const HANG=TT.hg??1,HANG_A=TT.ha??.6,SOCK=TT.sk??1,SOCK_X=TT.sx??.1,SOCK_Y=TT.sy??1,SOCK_W=TT.sw??.24,CAP_LEN=TT.cl??0,CAP_S=TT.cs??1.18,CAP_UP=TT.cu??.22,CAP_TILT=TT.ct??-.08,ARM_UNDER=TT.au??0,TUCK=TT.tk??1,TUCK_A=TT.ta??-.08,NECK_SHOW=TT.ns??.1,G_LEAD=TT.gl??.3,G_REAR_X=TT.gx??.12,G_REAR_Y=TT.gy??.05,REAR_ELBOW=TT.re??-1,LEAD_ELBOW=-1,CAP_R=TT.cap??0,WIN_SPREAD=TT.wx??16;
+const TT=window.__T||{};const HANG=TT.hg??1,HANG_A=TT.ha??.6,GUARD_A=TT.ga??2.3,SOCK=TT.sk??1,SOCK_X=TT.sx??.1,SOCK_Y=TT.sy??1.5,SOCK_W=TT.sw??.24,CAP_LEN=TT.cl??.45,CAP_S=TT.cs??1.04,CAP_UP=TT.cu??.04,CAP_TILT=TT.ct??0,ARM_UNDER=TT.au??0,TUCK=TT.tk??1,TUCK_A=TT.ta??-.08,NECK_SHOW=TT.ns??.1,G_LEAD=TT.gl??.3,G_REAR_X=TT.gx??.12,G_REAR_Y=TT.gy??.05,REAR_ELBOW=TT.re??-1,LEAD_ELBOW=-1,CAP_R=TT.cap??0,WIN_SPREAD=TT.wx??16;
 function makeFighter(c){
   const mv={};for(const k of['punch','kick','low','air']){mv[k]={...BASE[k],...(c.mv[k]||{})};for(const q of['s','a','r'])mv[k][q]=Math.round(mv[k][q]*PACE);}
   mv.special={s:10,a:1,r:10,dmg:0,kb:0,stun:0,m:0,y1:-190,y2:0,reach:80,...c.mv.special};
@@ -2636,10 +2636,13 @@ function drawSpriteBody(f,P,mode,R){
   // side of the body (elbow down by the waist) and only its forearm comes up to guard the chin, like the character artwork
   const nearS=shF,farS=shB;
   const L=D.armU+D.armF,ext=pt=>clamp((Math.hypot(pt.x-P.sh.x,pt.y-P.sh.y)-38)/24,0,1),shC={x:(shF.x+shB.x)/2,y:(shF.y+shB.y)/2},shX=Math.max(shF.x,shB.x),shY=Math.min(shF.y,shB.y);
-  const fR=rel(P.fH,shC),gF=(1-ext(P.fH))*(P.guard??1),fH=romC(farS,reachC(farS,{x:Math.max(fR.x,shX+L*G_LEAD*gF),y:fR.y},L),D.armU,D.armF,140),eF=ik2(farS,fH,D.armU,D.armF,LEAD_ELBOW);
-  const bR=rel(P.bH,shC),gB=(1-ext(P.bH))*(P.guard??1),bHt=romC(nearS,reachC(nearS,{x:bR.x+(Math.max(bR.x,shX+L*G_REAR_X)-bR.x)*gB,y:bR.y+(Math.min(bR.y,shY-L*G_REAR_Y)-bR.y)*gB},L),D.armU,D.armF,140);
+  // both hands fight: in a punch combo the near hand (the busier one) throws every other punch, the far hand the others; the hand
+  // that is not striking stays up in guard
+  const ak=f.atk,nearHit=ak&&((ak.type==='punch'&&((ak.chain||0)%2===0))||(ak.type==='air'&&!ak.kick)),sP=nearHit?P.bH:P.fH,gP=nearHit?P.fH:P.bH;
+  const fR=rel(sP,shC),gF=(1-ext(sP))*(P.guard??1),fH=romC(farS,reachC(farS,{x:Math.max(fR.x,shX+L*G_LEAD*gF),y:fR.y},L),D.armU,D.armF,140),eF=ik2(farS,fH,D.armU,D.armF,LEAD_ELBOW);
+  const bR=rel(gP,shC),gB=(1-ext(gP))*(P.guard??1),bHt=romC(nearS,reachC(nearS,{x:bR.x+(Math.max(bR.x,shX+L*G_REAR_X)-bR.x)*gB,y:bR.y+(Math.min(bR.y,shY-L*G_REAR_Y)-bR.y)*gB},L),D.armU,D.armF,140);
   const eB0=ik2(nearS,bHt,D.armU,D.armF,REAR_ELBOW),tk=clamp(Math.max(gB,P.tuck||0),0,1)*TUCK,eT={x:nearS.x+Math.sin(TUCK_A)*D.armU,y:nearS.y+Math.cos(TUCK_A)*D.armU},
-    fdx0=bHt.x-eT.x,fdy0=bHt.y-eT.y,fdl0=Math.hypot(fdx0,fdy0)||1,hg=HANG*tk,fdx=(fdx0/fdl0)*(1-hg)+Math.sin(HANG_A)*hg,fdy=(fdy0/fdl0)*(1-hg)+Math.cos(HANG_A)*hg,fdl=Math.hypot(fdx,fdy)||1,hT={x:eT.x+fdx/fdl*D.armF,y:eT.y+fdy/fdl*D.armF},
+    fdx0=bHt.x-eT.x,fdy0=bHt.y-eT.y,fdl0=Math.hypot(fdx0,fdy0)||1,hg=HANG*tk,hA=(P.tuck||0)>.5?HANG_A:GUARD_A,fdx=(fdx0/fdl0)*(1-hg)+Math.sin(hA)*hg,fdy=(fdy0/fdl0)*(1-hg)+Math.cos(hA)*hg,fdl=Math.hypot(fdx,fdy)||1,hT={x:eT.x+fdx/fdl*D.armF,y:eT.y+fdy/fdl*D.armF},
     eB={x:eB0.x+(eT.x-eB0.x)*tk,y:eB0.y+(eT.y-eB0.y)*tk},bH={x:bHt.x+(hT.x-bHt.x)*tk,y:bHt.y+(hT.y-bHt.y)*tk};
   const aF=romC(hipF,reachC(hipF,{x:P.fF.x,y:P.fF.y-D.ankle},D.legT+D.legS),D.legT,D.legS,150),aB=romC(hipB,reachC(hipB,{x:P.bF.x,y:P.bF.y-D.ankle},D.legT+D.legS),D.legT,D.legS,150);
   const kF=ik2(hipF,aF,D.legT,D.legS,1),kB=ik2(hipB,aB,D.legT,D.legS,1);
@@ -2668,6 +2671,9 @@ function drawSpriteBody(f,P,mode,R){
   ctx.save();ctx.translate(base.x,base.y);ctx.rotate(ang);ctx.scale(1+hs*.16,1-hs*.13);ctx.drawImage(face,-w*cx,-h*C.b,w,h);ctx.restore();
   if(D.panel&&V.panel&&!f.noPanel){const im=V.panel,ang=Math.atan2(fH.y-eF.y,fH.x-eF.x),sc=D.panel.len/im.height;
     ctx.save();ctx.translate(fH.x,fH.y);ctx.rotate(ang-Math.PI/2);ctx.scale(sc,sc);ctx.drawImage(im,-im.width/2,-D.panel.back/sc);ctx.restore();}
+  // when the near arm is raised, the sleeve lifts away from the torso's armhole; real fabric would still cover it, so the sleeve's
+  // top stays hanging on the shoulder (fading in with how high the elbow goes) and the lifted arm is drawn over it
+  {const el=clamp((-(eB.y-nearS.y)/D.armU+.35)/.6,0,1);if(el>0){const dl=Math.hypot(tP.x-tQ.x,tP.y-tQ.y)||1;ctx.save();ctx.globalAlpha*=el;drawCap(R,V.uarm,D.uarm,nearS,{x:(tP.x-tQ.x)/dl+CAP_TILT,y:(tP.y-tQ.y)/dl},D.armU,D.uwN||D.uw);ctx.restore();}}
   arm(V,nearS,eB,bH,1);
   if(f.bigArm){drawSeg(V.uarm,D.uarm,farS,eF,D.uw);const im=propImg(f.c.id,'flexed_arm');if(im){const s=(D.armF*2.1)/im.height;ctx.save();ctx.translate(eF.x,eF.y);ctx.rotate(Math.atan2(fH.y-eF.y,fH.x-eF.x)-Math.PI/2);ctx.scale(s,s);ctx.drawImage(im,-im.width*.5,-im.height*.12);ctx.restore();}else drawSeg(V.farm,D.farm,eF,fH,D.fw,D.armF);}
   if(CAP_R){const r=CAP_R*D.armU;ctx.save();ctx.beginPath();ctx.arc(shF.x,shF.y,r,0,Math.PI*2);ctx.clip();drawSeg(V.torso,D.torso,tP,tQ,D.tw);ctx.restore();}
