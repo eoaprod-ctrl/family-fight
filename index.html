@@ -218,7 +218,10 @@ kbd{font:700 13px/1 Heebo,Arial,sans-serif;border:2px solid var(--line);border-b
 @media (prefers-reduced-motion:reduce){.rot-ico{animation:none;transform:rotate(-90deg)}}
 #cv{display:block;border-radius:6px}
 #glcv{display:none;border-radius:6px;pointer-events:none}
-#pad{position:absolute;inset:0;display:none;pointer-events:none;z-index:2}
+#pad{position:absolute;inset:0;display:none;pointer-events:none;z-index:2;transition:opacity .2s}
+#pad:not([data-ph=fight]):not([data-ph=finish]){opacity:.18}#pad:not([data-ph=fight]):not([data-ph=finish]) .tb.sp{animation:none}
+#pad .tb.under{opacity:.45}
+#game:not(.ph-fight) .gbtns{opacity:.25}
 .touch #pad{display:block}
 #joy{position:absolute;left:0;top:0;bottom:0;width:48%;pointer-events:auto;touch-action:none}
 .jbase{position:absolute;width:120px;height:120px;border-radius:50%;border:2px solid rgba(255,241,220,.45);background:rgba(20,10,43,.4);left:calc(28px + env(safe-area-inset-left,0px));bottom:calc(24px + env(safe-area-inset-bottom,0px));opacity:.65;pointer-events:none}
@@ -1518,7 +1521,13 @@ const joyEnd=e=>{if(e.pointerId!==joyId)return;joyId=null;joy.classList.remove('
 joy.addEventListener('pointerup',joyEnd);joy.addEventListener('pointercancel',joyEnd);joy.addEventListener('lostpointercapture',joyEnd);
 const spBtn=$('#spBtn');let spFill=-1,spReady=null,spEgo=null;
 function syncSpecialBtn(){
-  if(!TOUCH||!game)return;
+  if(!game)return;
+  {const pad=$('#pad');if(pad.dataset.ph!==game.phase){pad.dataset.ph=game.phase;$('#game').classList.toggle('ph-fight',game.phase==='fight'||game.phase==='finish');}}
+  if(!TOUCH)return;
+  {
+   if(frameN%10===0){const r=cv.getBoundingClientRect(),sx=r.width/W,sy=r.height/VH,m=cam.z;
+     const boxes=game.p.map(f=>{const cx=(W/2+(f.x-cam.x)*m),top=(H/2+(f.y-260*f.sc-cam.y)*m)-VY,bot=(H/2+(f.y-cam.y)*m)-VY;return{l:r.left+(cx-70*f.sc*m)*sx,r:r.left+(cx+70*f.sc*m)*sx,t:r.top+top*sy,b:r.top+bot*sy};});
+     $$('#pad .tb').forEach(b=>{const q=b.getBoundingClientRect();b.classList.toggle('under',boxes.some(x=>q.left<x.r&&q.right>x.l&&q.top<x.b&&q.bottom>x.t));});}}
   const f=game.p[meI()],r=Math.min(1,f.meter/f.c.sp.cost),q=Math.round(r*40)/40;
   if(q!==spFill){spFill=q;spBtn.style.setProperty('--fill',q);spBtn.style.setProperty('--spc',f.c.color);}
   const ready=r>=1||(game.phase==='finish'&&game.finAtt===f);if(ready!==spReady){spReady=ready;spBtn.classList.toggle('ready',ready);}
@@ -3254,7 +3263,7 @@ function drawPuddle(f){
   ctx.restore();
 }
 // a thin rim in the player's colour around the body (not the photo head), so a fighter never melts into the background
-let SIL_NOHEAD=false,rimCv=null;
+let SIL_NOHEAD=false,rimCv=null,litCv=null;
 let RIM_SLOW=0,RIM_OFF=false;
 function drawRim(f){if(!settings.pfx||RIM_OFF||PFX.fail||f.hidden||f.dog||f.melt>0||!rigOf(f))return;const rt0=performance.now();
   // drawn at half resolution with 4 offsets: the rim is only ~2 px wide, so this looks the same and costs a fraction
@@ -3263,9 +3272,15 @@ function drawRim(f){if(!settings.pfx||RIM_OFF||PFX.fail||f.hidden||f.dog||f.melt
   const cw=Math.ceil(w*q),ch=Math.ceil(h*q);if(!rimCv)rimCv=document.createElement('canvas');if(rimCv.width<cw)rimCv.width=cw;if(rimCv.height<ch)rimCv.height=ch;
   const oc=rimCv.getContext('2d');oc.setTransform(1,0,0,1,0,0);oc.clearRect(0,0,cw,ch);oc.setTransform(m0.a*q,m0.b*q,m0.c*q,m0.d*q,(m0.e-sx0)*q,(m0.f-sy0)*q);
   const save=ctx;ctx=oc;SIL_NOHEAD=true;try{drawFighterBody(f,'shadow');}catch(e){}finally{ctx=save;SIL_NOHEAD=false;}
-  oc.setTransform(1,0,0,1,0,0);oc.globalCompositeOperation='source-in';oc.fillStyle=f.c.color;oc.fillRect(0,0,cw,ch);oc.globalCompositeOperation='source-over';
-  const d=Math.max(1.5,2.2*m0.a);ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=.9;
-  for(const [ox,oy] of [[d,0],[-d,0],[0,d],[0,-d]])ctx.drawImage(rimCv,0,0,cw,ch,sx0+ox,sy0+oy,w,h);ctx.restore();
+  oc.setTransform(1,0,0,1,0,0);
+  if(!litCv)litCv=document.createElement('canvas');if(litCv.width<cw)litCv.width=cw;if(litCv.height<ch)litCv.height=ch;const lc=litCv.getContext('2d');lc.clearRect(0,0,cw,ch);lc.drawImage(rimCv,0,0);
+  oc.globalCompositeOperation='source-in';oc.fillStyle=f.c.color;oc.fillRect(0,0,cw,ch);oc.globalCompositeOperation='source-over';
+  const d=Math.max(1.5,2.2*m0.a),side=Math.sign((W/2+Math.sin(lamp.a||0)*lampLen())-f.x)||1;
+  // warm light: the silhouette tinted warm on the lamp side, stamped 'lighter' just off the body so only a thin lit edge shows
+  lc.globalCompositeOperation='source-in';const lg=lc.createLinearGradient(side>0?cw:0,0,cw/2,0);lg.addColorStop(0,'rgba(255,215,160,.55)');lg.addColorStop(1,'rgba(255,215,160,0)');lc.fillStyle=lg;lc.fillRect(0,0,cw,ch);lc.globalCompositeOperation='source-over';
+  ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=.9;
+  for(const [ox,oy] of [[d,0],[-d,0],[0,d],[0,-d]])ctx.drawImage(rimCv,0,0,cw,ch,sx0+ox,sy0+oy,w,h);
+  ctx.globalAlpha=1;ctx.globalCompositeOperation='lighter';ctx.drawImage(litCv,0,0,cw,ch,sx0+side*d*1.6,sy0,w,h);ctx.restore();
   // a phone that draws this slowly (software rendering) turns the rim off for the session instead of dropping frames
   const rdt=performance.now()-rt0;RIM_SLOW=rdt>3?RIM_SLOW+1:Math.max(0,RIM_SLOW-1);if(RIM_SLOW>60&&!window.__pfxKeep)RIM_OFF=true;}
 function drawFighter(f,mode='full'){if(mode==='full')drawPuddle(f);if(f.hidden)return;if(mode==='full')drawRim(f);if(f.clown&&mode==='full'){drawFighterBody(f,mode);drawClown(f);return;}drawFighterBody(f,mode);}
@@ -3280,7 +3295,7 @@ function drawSilShadow(f){
   const sx0=m.a*x0+m.e,sx1=m.a*x1+m.e,sy0=m.d*y0+m.f,sy1=m.d*y1+m.f,w=Math.ceil(sx1-sx0),h=Math.ceil(sy1-sy0);if(w<4||h<4)return;
   if(!shCv)shCv=document.createElement('canvas');if(shCv.width<w)shCv.width=w;if(shCv.height<h)shCv.height=h;
   const oc=shCv.getContext('2d');oc.setTransform(1,0,0,1,0,0);oc.clearRect(0,0,shCv.width,shCv.height);
-  const lift=clamp((GROUND-f.y)/220,0,1),shear=-clamp((f.x-(W/2+Math.sin(lamp.a||0)*110))/W,-.6,.6)*.9;
+  const lift=clamp((GROUND-f.y)/220,0,1),shear=-clamp((f.x-(W/2+Math.sin(lamp.a||0)*lampLen()))/W,-.6,.6)*.9;
   oc.setTransform(m.a,m.b,m.c,m.d,m.e-sx0,m.f-sy0);oc.translate(f.x,GROUND);oc.transform(1,0,shear,-.2,0,0);oc.translate(-f.x,-GROUND);
   const save=ctx;ctx=oc;try{drawFighterBody(f,'shadow');}catch(e){}finally{ctx=save;}
   oc.setTransform(1,0,0,1,0,0);oc.globalCompositeOperation='source-in';oc.fillStyle='#05020c';oc.fillRect(0,0,w,h);oc.globalCompositeOperation='source-over';
@@ -3295,6 +3310,7 @@ function drawShadow(f){if(f.hidden)return;if(f.dog){ctx.save();ctx.translate(f.x
   ctx.globalCompositeOperation='source-over';
   g=ctx.createRadialGradient(0,0,0,0,0,w);g.addColorStop(0,'rgba(0,0,0,.38)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,w,0,Math.PI*2);ctx.fill();
   ctx.restore();
+  {const lift=clamp((GROUND-f.y)/220,0,1),r=34*f.sc*(1-lift*.5);if(f.state!=='ko'&&f.state!=='down'){ctx.save();ctx.translate(f.x,GROUND+2);ctx.scale(1,.18);const ag=ctx.createRadialGradient(0,0,0,0,0,r);ag.addColorStop(0,`rgba(0,0,0,${.55*(1-lift)})`);ag.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=ag;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();ctx.restore();}}
 }
 function drawTrails(f){
   for(const t of f.trail){ctx.save();ctx.globalAlpha=t.life/8*.28;drawFig(f,t.P,t.x,t.y,t.s,t.tilt,0,'ghost');ctx.restore();}
@@ -3537,9 +3553,10 @@ function drawStageBg(){
   for(const s of stars){const a=.35+.65*Math.abs(Math.sin(frameN*.03*s.s+s.p));ctx.fillStyle=`rgba(255,250,230,${a})`;ctx.fillRect(s.x,s.y,1.8*s.s,1.8*s.s);}
   ctx.restore();
 }
-function drawFloor(){ctx.imageSmoothingQuality='low';ctx.drawImage(floorCv,-M,GROUND,W+2*M,H-GROUND+30);ctx.imageSmoothingQuality='high';}
+function drawFloor(){ctx.imageSmoothingQuality='low';const k=-(cam.x-W/2)*(1-.82)/(H-GROUND+30);ctx.save();ctx.translate(0,H+30);ctx.transform(1,0,-k,1,0,0);ctx.translate(0,-(H+30));ctx.drawImage(floorCv,-M-40,GROUND,W+2*M+80,H-GROUND+30);ctx.restore();ctx.imageSmoothingQuality='high';}
+const lampLen=()=>150+VY*.9;
 function drawLampAndLight(stage){
-  const px=W/2,py=-40,len=110,a=lamp.a,lx=px+Math.sin(a)*len,ly=py+Math.cos(a)*len;
+  const px=W/2,py=-40,len=lampLen(),a=lamp.a,lx=px+Math.sin(a)*len,ly=py+Math.cos(a)*len;
   if(stage==='light'){
     ctx.save();ctx.globalCompositeOperation='lighter';
     ctx.translate(lx,ly);ctx.rotate(-a*.9);
@@ -3694,6 +3711,7 @@ function render(){
   drawStageBg();
   ctx.save();camT(1);PFX.m=ctx.getTransform();emBegin();
   drawFloor();
+  {const lx=W/2+Math.sin(lamp.a||0)*lampLen()*1.6;ctx.save();ctx.globalCompositeOperation='lighter';ctx.translate(lx,GROUND+12);ctx.scale(1,.12);const pg=ctx.createRadialGradient(0,0,0,0,0,300);pg.addColorStop(0,'rgba(255,210,150,.26)');pg.addColorStop(1,'rgba(255,210,150,0)');ctx.fillStyle=pg;ctx.beginPath();ctx.arc(0,0,300,0,Math.PI*2);ctx.fill();ctx.restore();}
   if(superT>0){ctx.save();ctx.fillStyle=`rgba(8,4,22,${.42*Math.min(1,superT/6)})`;ctx.fillRect(-M-200,-200,W+2*M+400,H+400);ctx.restore();}
   const[a,b]=game.p;
   ctx.save();ctx.beginPath();ctx.rect(-M,GROUND,W+2*M,H);ctx.clip();ctx.translate(0,2*GROUND);ctx.scale(1,-1);ctx.globalAlpha=.13;
