@@ -1018,7 +1018,7 @@ function iosTick(){try{if(!iosSw){const l=document.createElement('label'),i=docu
   l.style.cssText='position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none';l.setAttribute('aria-hidden','true');i.tabIndex=-1;document.body.appendChild(l);iosSw=l;}iosSw.click();}catch(e){}}
 const CAN_VIBE=VIBE_API||IOS_HAP;
 // short pulses (under ~35ms) are too weak to feel on many Android motors, so every pulse is stretched
-function vibe(p){if(!settings.vibe||!CAN_VIBE)return;const a=Array.isArray(p)?p:[p];
+function vibe(p){if(!settings.vibe||!CAN_VIBE||NET_QUIET)return;const a=Array.isArray(p)?p:[p];
   if(VIBE_API){try{navigator.vibrate(a.map((v,k)=>k%2?v:Math.max(40,Math.round(v*1.6))));}catch(e){}return;}
   let t=0;for(let k=0;k<a.length;k+=2){if(t===0)iosTick();else setTimeout(iosTick,t);t+=(a[k]||0)+(a[k+1]||0)+1;}}
 let AC=null,sfxBus=null,musBus=null,noiseBuf=null;
@@ -1073,7 +1073,7 @@ function charHit(id,dmg){
     default:{const p=VOICE[id]||200;tone('triangle',p*4,p*2,.07,.07);noise(.04,.08,{f:{type:'bandpass',f:p*12,q:2}});}
   }
 }
-function sfx(k,v=0,f=null){
+function sfx(k,v=0,f=null){if(NET_QUIET&&(k==='hit'||k==='block'))return;
   if(!settings.sound)return;
   try{audio();}catch(e){return;}
   const id=f&&f.c?f.c.id:null;
@@ -1467,7 +1467,7 @@ $('#pauseBtn').addEventListener('click',()=>togglePause());
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&running&&!paused)togglePause(true);});
 
 /* ---------- input ---------- */
-const meI=()=>(game&&game.net&&!game.net.host)?1:0;let NET_APPLY=false;
+const meI=()=>(game&&game.net&&!game.net.host)?1:0;let NET_APPLY=false,NET_QUIET=false;
 function mapsFor(i){return(game&&(game.mode==='cpu'||game.net))?(i===meI()?MAP:[]):[MAP[i]];}
 addEventListener('keydown',e=>{
   if(!$('#game').classList.contains('on'))return;
@@ -1770,7 +1770,9 @@ function checkHits(a,b){
 function applyHit(att,def,d,px,py,o={}){
   if(game.phase!=='fight')return;
   if(def.inv>0||def.state==='down')return;
-  if(game.net){if(!game.net.host&&!NET_APPLY)return;if(game.net.host)netSend({e:'hit',a:game.p.indexOf(att),d,px,py,o});}
+  if(game.net){if(!game.net.host&&!NET_APPLY){if(att===game.p[meI()]&&frameN-(att._predF||-99)>8){att._predF=frameN;const blk=def.held&&def.held.block&&def.state!=='hit';
+      if(blk){shieldFx(px,py,-dirOf(att,def));sfx('block');}else{impact(px,py,20,att.c.color);burst(px,py,'#FFE08A',8,7);sfx('hit',d.dmg||8,att);hitstop=Math.max(hitstop,3);def.flash=4;}vibe(blk?10:18);}return;}
+    if(game.net.host)netSend({e:'hit',a:game.p.indexOf(att),d,px,py,o});}
   const dir=Math.sign(def.x-att.x)||att.facing;
   if(def.grab)releaseGrab(def);
   const dd=def.atk&&def.mv[def.atk.type];
@@ -3763,7 +3765,7 @@ let sb=null,sbUser=null,sbProf=null,sbReady=null;
 function loadScript(src){return new Promise((r,j)=>{const s=document.createElement('script');s.src=src;s.onload=r;s.onerror=j;document.head.appendChild(s);});}
 function sbInit(){if(!SB_ON)return Promise.resolve(null);if(sbReady)return sbReady;
   sbReady=loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js').then(async()=>{
-    sb=window.supabase.createClient(SB_CFG.url,SB_CFG.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:'ff-auth'}});
+    sb=window.supabase.createClient(SB_CFG.url,SB_CFG.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:'ff-auth'},realtime:{params:{eventsPerSecond:60}}});
     sb.auth.onAuthStateChange((ev,ses)=>{sbUser=ses?ses.user:null;if(ev==='PASSWORD_RECOVERY'){ACC.view='newpw';show('account');}
       if(ev==='SIGNED_OUT'){sbProf=null;}if(ses)setTimeout(()=>{sbLoadProf().then(()=>{if($('#account').classList.contains('on'))renderAccount();});},0);});
     const{data}=await sb.auth.getSession();sbUser=data.session?data.session.user:null;if(sbUser)await sbLoadProf();return sb;}).catch(e=>{console.warn('server',e);sbReady=null;return null;});
@@ -3840,7 +3842,9 @@ const NET={live:null,ch:null,role:null,code:'',peer:null,me:null,status:'',lastR
 const NETTEST=/[?&]nettest/.test(location.search);
 const ROOM_ABC='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const roomCode=()=>Array.from(crypto.getRandomValues(new Uint8Array(5)),b=>ROOM_ABC[b%ROOM_ABC.length]).join('');
-function netSend(m){if(NET.ch)try{NET.ch.send(JSON.parse(JSON.stringify(m)));}catch(e){}}
+function netSendNow(m){if(NET.ch)try{NET.ch.send(JSON.parse(JSON.stringify(m)));}catch(e){}}
+function netSend(m){if(game&&game.net&&running&&m.e!=='bye'){(NET.q||(NET.q=[])).push(m);return;}netFlush();netSendNow(m);}
+function netFlush(){const q=NET.q;if(!q||!q.length)return;NET.q=[];netSendNow(q.length===1?q[0]:{e:'pk',m:q});}
 // transport: the server's realtime channel (private, family members only); a local test transport for development
 async function netOpen(code){netClose();NET.code=code;
   if(NETTEST){const bc=new BroadcastChannel('ff-room-'+code);bc.onmessage=e=>netRx(e.data);NET.ch={send:m=>bc.postMessage(m),close:()=>bc.close()};return true;}
@@ -3855,13 +3859,13 @@ function netClose(why){if(NET.ch){netSend({e:'bye'});try{NET.ch.close();}catch(e
   if(NET.mySel!=null){sel[0]=NET.mySel;NET.mySel=null;}}
 function meCard(){const R=roster(),c=R[sel[0]];return{id:c.id,name:(sbProf&&sbProf.name)||profGet().name||c.name};}
 function netHello(){netSend({e:'hello',role:NET.role,me:meCard()});}
-function netRx(m){if(!m||!m.e)return;NET.lastRx=performance.now();const g=game&&game.net?game:null;
+function netRx(m){if(!m||!m.e)return;NET.lastRx=performance.now();if(m.e==='pk'){for(const x of m.m||[])netRx(x);return;}const g=game&&game.net?game:null;
   switch(m.e){
     case 'hello':if(m.role===NET.role)return;const was=!!NET.peer;NET.peer=m.me;if(!was)netHello();if($('#online').classList.contains('on'))renderOnline();break;
     case 'start':if(NET.role!=='guest')return;{const R=roster(),hi=R.findIndex(c=>c.id===m.h),gi=R.findIndex(c=>c.id===m.g);if(hi<0||gi<0)return;
       if(NET.mySel==null)NET.mySel=sel[0];sel[0]=hi;sel[1]=gi;NET.live={host:false,rh:{},rx:0};mode='online';$('#ov').hidden=true;startMatch();}break;
     case 'in':if(!g)return;g.net.rh=m.h||g.net.rh;if(m.t){const f=g.p[1-meI()];for(const a of m.t)f.buf[a]=8;}break;
-    case 'hit':if(!g||g.net.host)return;{const att=g.p[m.a],def=g.p[1-m.a];NET_APPLY=true;try{applyHit(att,def,m.d,m.px,m.py,m.o||{});}finally{NET_APPLY=false;}}break;
+    case 'hit':if(!g||g.net.host)return;{const att=g.p[m.a],def=g.p[1-m.a],pre=m.a===meI()&&frameN-(att._predF||-99)<45;NET_APPLY=true;NET_QUIET=pre;try{applyHit(att,def,m.d,m.px,m.py,m.o||{});}finally{NET_APPLY=false;NET_QUIET=false;}if(pre)att._predF=-99;}break;
     case 'timeup':if(g&&!g.net.host&&g.phase==='fight')timeUp();break;
     case 'snap':if(g&&!g.net.host)netSnap(m);break;
     case 'bye':NET.peer=null;if(game&&game.net){game.net.gone=true;netGone();}else if($('#online').classList.contains('on'))renderOnline();break;
@@ -3871,7 +3875,8 @@ function netLocal(f,h){const n=game.net,bits=['left','right','up','down','block'
   if(bits!==n.lastBits||taps.length||frameN-(n.lastSent||0)>20){n.lastBits=bits;n.lastSent=frameN;netSend({e:'in',h:{left:!!h.left,right:!!h.right,up:!!h.up,down:!!h.down,block:!!h.block},t:taps.length?taps:undefined});}}
 function netTick(){const g=game,n=g.net;if(!n||n.gone)return;
   if(frameN-(n.lastPing||0)>45||frameN<(n.lastPing||0)){n.lastPing=frameN;netSend({e:'ping'});}
-  if(n.host&&frameN%6===0)netSend({e:'snap',ph:g.phase,pt:g.phaseT,t:g.timer,r:g.round,p:g.p.map(f=>({x:Math.round(f.x*10)/10,y:Math.round(f.y*10)/10,vx:f.vx,vy:f.vy,hp:f.hp,m:Math.round(f.meter),eg:Math.round(f.ego||0),al:f.alterT||0,w:f.wins,s:f.state,dt:f.state==='down'?f.downT:0,fc:f.facing}))});
+  if(n.host&&frameN%3===0)netSend({e:'snap',ph:g.phase,pt:g.phaseT,t:g.timer,r:g.round,p:g.p.map(f=>({x:Math.round(f.x*10)/10,y:Math.round(f.y*10)/10,vx:f.vx,vy:f.vy,hp:f.hp,m:Math.round(f.meter),eg:Math.round(f.ego||0),al:f.alterT||0,w:f.wins,s:f.state,dt:f.state==='down'?f.downT:0,fc:f.facing}))});
+  netFlush();
   if(performance.now()-NET.lastRx>6000&&!n.gone){n.gone=true;netGone();}}
 function netSnap(m){const g=game,mi=meI();if(m.r>g.round&&g.phase!=='fatal'){g.round=m.r;g.p.forEach((f,i)=>f.wins=m.p[i].w);startRound();}
   g.timer=m.t;
