@@ -813,7 +813,7 @@ const ALTER_SRC={nadav:{"torso":"data:image/webp;base64,UklGRnZbAABXRUJQVlA4WAoA
 const ALTER={nadav:{name:'אדון השמש',color:'#FFC531',glow:'#FFD34D',wing:[.93,.67],shield:{len:56,back:28},mask:'img',chinX:.67,maskH:1.32,neck:'#2E2433',ring:'#E9B13A',maskDrop:.07,grow:1.25}};
 const ALTER_T=600,ALTER_BODY=new Set(['torso','hips','uarm','farm','thigh','shin','shoe']);
 function loadAlter(id,R){const src=ALTER_SRC[id];if(!src)return Promise.resolve(false);
-  const A={def:Object.assign({},R.def,ALTER[id].shield?{panel:ALTER[id].shield}:{},ALTER[id].mask?{neckCol:ALTER[id].neck,neckRing:ALTER[id].ring||ALTER[id].color,neckGap:ALTER[id].neckGap??4,neckW:.46}:{neckCol:ALTER[id].neck,neckGap:4}),n:Object.assign({},R.n),d:Object.assign({},R.d),w:Object.assign({},R.w),chin:R.chin,collar:null,ok:false};R.alt=A;
+  const A={def:Object.assign({},R.def,ALTER[id].shield?{panel:ALTER[id].shield}:{},ALTER[id].mask?{neckCol:ALTER[id].neck,neckRing:ALTER[id].ring||ALTER[id].color,neckGap:ALTER[id].neckGap??4,neckW:ALTER[id].neckW??.5,neckShift:ALTER[id].neckShift??-.2}:{neckCol:ALTER[id].neck,neckGap:4}),n:Object.assign({},R.n),d:Object.assign({},R.d),w:Object.assign({},R.w),chin:R.chin,collar:null,ok:false};R.alt=A;
   return Promise.all(Object.entries(src).map(([k,u])=>{const im=new Image();im.src=u;return(im.decode?im.decode():new Promise((res,rej)=>{im.onload=res;im.onerror=rej;})).then(()=>{
     if(!ALTER_BODY.has(k)){A.n[k]=im;return;}A.n[k]=im;A.d[k]=tintCv(im,'#140A2B',.12);A.w[k]=tintCv(im,'#FFFFFF',.6);});}))
     .then(()=>{try{socketFit(A);}catch(e){}A.ok=true;return true;}).catch(()=>false);}
@@ -3068,7 +3068,7 @@ function drawSpriteBody(f,P,mode,R){
     gap=h*NECK_SHOW+(D.neckGap||0),c0=CL&&mp(CL.cx,CL.y0),ng=h*(TT.nc??.05)+(D.neckGap||0),base=CL?{x:c0.x+v.x*ng,y:c0.y+v.y*ng}:{x:neck.x+v.x*gap,y:neck.y+v.y*gap},
     off=(C.x-cx)*w,cpt={x:base.x+ax.x*off,y:base.y+ax.y*off},
     cw=CL?Math.hypot(mp(CL.cx+CL.a,CL.y0).x-mp(CL.cx-CL.a,CL.y0).x,mp(CL.cx+CL.a,CL.y0).y-mp(CL.cx-CL.a,CL.y0).y)/2:0,
-    tw=Math.max(w*(D.neckW??NECK_W),C.w*w*.8)/2,bw=Math.max(tw*1.12,cw*1.04),nb=CL?mp(CL.cx,CL.y2+(CL.y2-CL.y0)*.5):{x:neck.x-v.x*h*.12,y:neck.y-v.y*h*.12},nt={x:cpt.x+v.x*h*.1,y:cpt.y+v.y*h*.1};
+    tw=Math.max(w*(D.neckW??NECK_W),C.w*w*.8)/2,bw=Math.max(tw*1.12,cw*1.04),nb=CL?mp(CL.cx,CL.y2+(CL.y2-CL.y0)*.5):{x:neck.x-v.x*h*.12+ax.x*(D.neckShift||0)*w*.6,y:neck.y-v.y*h*.12+ax.y*(D.neckShift||0)*w*.6},nt={x:cpt.x+v.x*h*.1+ax.x*(D.neckShift||0)*w,y:cpt.y+v.y*h*.1+ax.y*(D.neckShift||0)*w};
   // the shirt is worn over the neck: the torso is drawn first, then the neck only above the FRONT line of the collar,
   // so the neck covers the inside/back of the collar but the front collar band stays in front of it
   if(CL)drawSeg(V.torso,D.torso,tP,tQ,D.tw);
