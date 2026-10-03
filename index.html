@@ -3871,14 +3871,20 @@ function netLocal(f,h){const n=game.net,bits=['left','right','up','down','block'
   if(bits!==n.lastBits||taps.length||frameN-(n.lastSent||0)>20){n.lastBits=bits;n.lastSent=frameN;netSend({e:'in',h:{left:!!h.left,right:!!h.right,up:!!h.up,down:!!h.down,block:!!h.block},t:taps.length?taps:undefined});}}
 function netTick(){const g=game,n=g.net;if(!n||n.gone)return;
   if(frameN-(n.lastPing||0)>45||frameN<(n.lastPing||0)){n.lastPing=frameN;netSend({e:'ping'});}
-  if(n.host&&frameN%6===0)netSend({e:'snap',ph:g.phase,pt:g.phaseT,t:g.timer,r:g.round,p:g.p.map(f=>({x:Math.round(f.x*10)/10,y:Math.round(f.y*10)/10,vx:f.vx,vy:f.vy,hp:f.hp,m:Math.round(f.meter),eg:Math.round(f.ego||0),al:f.alterT||0,w:f.wins,s:f.state,fc:f.facing}))});
+  if(n.host&&frameN%6===0)netSend({e:'snap',ph:g.phase,pt:g.phaseT,t:g.timer,r:g.round,p:g.p.map(f=>({x:Math.round(f.x*10)/10,y:Math.round(f.y*10)/10,vx:f.vx,vy:f.vy,hp:f.hp,m:Math.round(f.meter),eg:Math.round(f.ego||0),al:f.alterT||0,w:f.wins,s:f.state,dt:f.state==='down'?f.downT:0,fc:f.facing}))});
   if(performance.now()-NET.lastRx>6000&&!n.gone){n.gone=true;netGone();}}
 function netSnap(m){const g=game,mi=meI();if(m.r>g.round&&g.phase!=='fatal'){g.round=m.r;g.p.forEach((f,i)=>f.wins=m.p[i].w);startRound();}
   g.timer=m.t;
   m.p.forEach((s,i)=>{const f=g.p[i];f.hp=s.hp;f.meter=s.m;f.wins=s.w;if(s.al!=null){if(s.al>0&&!(f.alterT>0)){f.alterIn=40;alterFx(f);}f.alterT=s.al;f.ego=s.eg;}
     const dx=s.x-f.x,dy=s.y-f.y,mine=i===mi;
     if(Math.abs(dx)>(mine?70:4))f.x+=dx*(mine?.5:.35);if(Math.abs(dy)>60)f.y=s.y;
-    if(['ko','faint','down'].includes(s.s)&&f.state!==s.s&&g.phase!=='fatal'){f.state=s.s;f.atk=null;}});
+    if(['ko','faint','down'].includes(s.s)&&f.state!==s.s&&g.phase!=='fatal'){f.state=s.s;f.atk=null;if(s.s==='down')f.downT=s.dt||30;}
+    // the host is the referee: a fighter that lies down here while it stands on the host (a hit that only landed on this phone)
+    // gets back up, so a fighter is never lying on one screen and fighting on the other
+    const lying=['ko','faint','down'].includes(f.state);
+    if(lying&&!['ko','faint','down'].includes(s.s)&&g.phase!=='fatal'){f.netOff=(f.netOff||0)+1;if(f.netOff>=3){f.state='idle';f.koRot=0;f.downT=0;f.stun=0;f.dizzy=0;f.vx=0;f.netOff=0;if(f.hp<=0)f.hp=Math.max(1,s.hp);}}else f.netOff=0;});
+  // same for the round: a knock-out that only happened on this phone is undone when the host is still fighting
+  if(['ko','finish'].includes(g.phase)&&m.ph==='fight'&&m.r===g.round){g.netPh=(g.netPh||0)+1;if(g.netPh>=3){g.phase='fight';g.roundWinner=null;g.finAtt=g.finDef=null;g.p.forEach((f,i)=>{f.wins=m.p[i].w;if(f.state==='win'||f.state==='ko'){f.state='idle';f.koRot=0;if(f.hp<=0)f.hp=Math.max(1,m.p[i].hp);}});g.netPh=0;}}else g.netPh=0;
   if(g.phase!==m.ph&&['intro','fight'].includes(m.ph)&&['intro','fight','vs'].includes(g.phase)){g.phase=m.ph;g.phaseT=m.pt;}}
 function netGone(){if(!game||game.phase==='over'){if(game&&game.phase==='over'){const q=$('#ov .actions');if(q)q.innerHTML='<p class="quote">היריב יצא מהחדר</p><button class="btn primary" data-ov="netLeave">חזרה</button>';}return;}const ov=$('#ov');running=false;ov.innerHTML=`<div class="panel"><h2>החיבור נותק</h2><p class="quote">היריב יצא מהקרב או שהאינטרנט נפל.</p><div class="actions"><button class="btn primary" data-ov="netLeave">חזרה</button></div></div>`;ov.hidden=false;}
 async function renderOnline(){const el=$('#onBody'),R=roster(),me=R[sel[0]];
