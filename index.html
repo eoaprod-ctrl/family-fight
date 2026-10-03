@@ -237,6 +237,7 @@ kbd{font:700 13px/1 Heebo,Arial,sans-serif;border:2px solid var(--line);border-b
 @media (prefers-reduced-motion:reduce){.tb.sp.ready{animation:spBlink .5s steps(2) infinite}@keyframes spBlink{50%{background:#FFF1DC}}}
 .tb.down{background:rgba(255,79,31,.8);border-color:#FFF1DC}
 #trainBar{position:absolute;top:calc(24% + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;z-index:3;width:min(92vw,620px);pointer-events:none}
+#trainBar[hidden],#trainBar [hidden]{display:none!important}
 #trainBar>*{pointer-events:auto;font:800 13px Heebo,Arial,sans-serif;padding:4px 10px;border-radius:999px;background:rgba(20,10,43,.78);color:#FFF1DC;border:2px solid #E7B94C}
 #trainBar button{cursor:pointer}#trainBar button:hover,#trainBar button:focus-visible{background:#3A2470;outline:none}#trainBar .trt{background:#E7B94C;color:#140A2B}#trStats{flex-basis:100%;text-align:center;max-width:max-content;font-variant-numeric:tabular-nums}
 .gbtns{position:absolute;bottom:calc(12px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:3}
